@@ -1,0 +1,26 @@
+{
+	"name": "broclo",
+	"version": "0.0.1",
+	"description": "BROwser CLOud",
+	"scripts": {
+	  "test": "mocha"
+	},
+	"repository": {
+		"type" : "git",
+		"url" : "https://github.com/brotherdetjr/broclo"
+	},
+	"dependencies": {
+		"coffee-script": "1.4.x"
+	},
+	"devDependencies": {
+		"should": "*",
+		"mocha": "*"
+	},
+	"keywords": [
+	  "cloud",
+	  "distributed",
+	  "computing"
+	],
+	"author": "brotherdetjr",
+	"license": "BSD"
+}
