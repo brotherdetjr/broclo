@@ -54,6 +54,13 @@
 				if task? then return task
 			null
 
+		addTask: (task) ->
+			@getGroupByTypeId(task.type.id).addTask task
+
+		removeTaskById: (id) ->
+			@getGroupByTypeId(@getTaskById(id).type.id)
+				.removeTaskById id
+
 	utils.mixin Repo, EventEmitter
 
 	class ConstraintError extends Error
@@ -68,7 +75,7 @@
 		addTask: (task) ->
 			if @getTaskById(task.id)? or
 			task.type.id != @type.id or
-			@repo? and @repo.getTaskById(task.id)?
+			@repo?.getTaskById(task.id)?
 				throw new ConstraintError
 			@tasks[task.id] = task
 			task.type = @type

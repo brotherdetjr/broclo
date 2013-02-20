@@ -140,6 +140,28 @@
 			repo.getTaskById('myTask').should.equal myTask
 			repo.getTaskById('anotherTask').should.equal anotherTask
 
+		it 'should add tasks to proper group and remove them', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			anotherType = repo.addType asType 'anotherType'
+			myGroup = repo.addGroup asGroup myType
+			anotherGroup = repo.addGroup asGroup anotherType
+			myTask = repo.addTask asTask('myTask', myType)
+			anotherTask = repo.addTask asTask('anotherTask', anotherType)
+
+			myGroup.getTaskById('myTask').should.equal myTask
+			myGroup.getTaskCount().should.equal 1
+			anotherGroup.getTaskById('anotherTask').should.equal anotherTask
+			anotherGroup.getTaskCount().should.equal 1
+
+			repo.removeTaskById 'myTask'
+			should.not.exist myGroup.getTaskById 'myTask'
+			myGroup.getTaskCount().should.equal 0
+			anotherGroup.getTaskCount().should.equal 1
+			repo.removeTaskById 'anotherTask'
+			should.not.exist anotherGroup.getTaskById 'anotherTask'
+			anotherGroup.getTaskCount().should.equal 0
+
 	describe 'Group', ->
 		it 'should add, remove, retrieve and count tasks', ->
 			myType = asType 'myType'
