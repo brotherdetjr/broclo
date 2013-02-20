@@ -29,6 +29,7 @@
 				throw new ConstraintError
 			@groups[group.type.id] = group
 			group.repo = @
+			group.type = @getTypeById group.type.id
 			@emit 'addGroup', group
 			group
 
@@ -57,9 +58,10 @@
 			@repo = undefined
 
 		addTask: (task) ->
-			if @getTaskById(task.id)? or task.type != @type
+			if @getTaskById(task.id)? or task.type.id != @type.id
 				throw new ConstraintError
 			@tasks[task.id] = task
+			task.type = @type
 			@emit 'addTask', task
 			task
 

@@ -99,6 +99,19 @@
 			(-> repo.addGroup asGroup asType 'myType')
 				.should.throw tasks.ConstraintError
 
+		it 'should replace Group#type with referential ("persisted") Type instance', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			myType2 = asType 'myType'
+			group = asGroup myType2
+
+			myType.id.should.equal myType2.id
+			myType.should.not.equal group.type
+
+			repo.addGroup group
+			myType.should.equal group.type
+
+
 	describe 'Group', ->
 		it 'should add, remove, retrieve and count tasks', ->
 			myType = asType 'myType'
@@ -118,8 +131,20 @@
 
 		it 'should not allow to add task with improper type', ->
 			group = asGroup asType 'myType'
-			(-> group.addTask asTask('myTask'), asType('wrongType'))
+			(-> group.addTask asTask('myTask', asType 'wrongType'))
 				.should.throw tasks.ConstraintError
+
+		it 'should replace Task#type with referential ("persisted") Type instance', ->
+			myType = asType 'myType'
+			myType2 = asType 'myType'
+			group = asGroup myType
+			myTask = asTask 'myTask', myType2
+
+			myType.id.should.equal myType2.id
+			myType.should.not.equal myTask.type
+
+			group.addTask myTask
+			myType.should.equal myTask.type
 
 # TODO
 #		it 'should not allow to add task with id that already exists in repo', ->
