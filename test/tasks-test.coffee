@@ -128,6 +128,17 @@
 			repo.addGroup group
 			myType.should.equal group.type
 
+		it 'should search tasks by id through all the repo', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			anotherType = repo.addType asType 'anotherType'
+			myGroup = repo.addGroup asGroup myType
+			anotherGroup = repo.addGroup asGroup anotherType
+			myTask = myGroup.addTask asTask('myTask', myType)
+			anotherTask = anotherGroup.addTask asTask('anotherTask', anotherType)
+
+			repo.getTaskById('myTask').should.equal myTask
+			repo.getTaskById('anotherTask').should.equal anotherTask
 
 	describe 'Group', ->
 		it 'should add, remove, retrieve and count tasks', ->
@@ -137,7 +148,8 @@
 			group.getTaskById('myTask').should.equal myTask
 			group.getTaskCount().should.equal 1
 
-			(-> group.addTask asTask('myTask', myType)).should.throw tasks.ConstraintError
+			(-> group.addTask asTask('myTask', myType))
+				.should.throw tasks.ConstraintError
 
 			removedTask = group.removeTaskById 'myTask'
 			removedTask.should.equal myTask
@@ -183,8 +195,16 @@
 			group.addTask myTask
 			myType.should.equal myTask.type
 
-# TODO
-#		it 'should not allow to add task with id that already exists in repo', ->
+		it 'should not allow to add task with id that already exists in repo', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			anotherType = repo.addType asType 'anotherType'
+			myGroup = repo.addGroup asGroup myType
+			anotherGroup = repo.addGroup asGroup anotherType
+			myGroup.addTask asTask('myTask', myType)
+
+			(-> anotherGroup.addTask asTask('myTask', anotherType))
+				.should.throw tasks.ConstraintError
 
 )(
 	(if @chai? then @chai.should() else require('chai').should()),

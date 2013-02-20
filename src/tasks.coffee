@@ -48,6 +48,12 @@
 
 		getGroupCount: -> utils.countKeys @groups
 
+		getTaskById: (id) ->
+			for typeId, group of @groups
+				task = group.getTaskById id
+				if task? then return task
+			null
+
 	utils.mixin Repo, EventEmitter
 
 	class ConstraintError extends Error
@@ -60,7 +66,9 @@
 			@repo = undefined
 
 		addTask: (task) ->
-			if @getTaskById(task.id)? or task.type.id != @type.id
+			if @getTaskById(task.id)? or
+			task.type.id != @type.id or
+			@repo? and @repo.getTaskById(task.id)?
 				throw new ConstraintError
 			@tasks[task.id] = task
 			task.type = @type
