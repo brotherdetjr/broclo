@@ -55,6 +55,8 @@
 
 		getTaskCount: -> utils.countKeys @tasks
 
+		@asGroup: (type) -> new Group type
+
 	class Type
 		constructor: (@id, @sampleInput) ->
 
@@ -63,8 +65,7 @@
 	class Task
 		# Task's id must be unique through all the Repo
 		# Relates to Type as 0..N to 1
-		# Relates to Group as 0..N to 0..1
-		constructor: (@id, @type, @group, @since = new Date) ->
+		constructor: (@id, @type, @since = new Date) ->
 
 	class Externalizer
 		constructor: ->
