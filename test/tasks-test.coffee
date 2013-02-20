@@ -9,13 +9,13 @@
 			repo.getTypeCount().should.equal 0
 
 			myType = repo.addType asType 'myType', 'sampleInput'
-			repo.getTypeById('myType').should.eql myType
+			repo.getTypeById('myType').should.equal myType
 			repo.getTypeCount().should.equal 1
 
 			(-> repo.addType asType 'myType').should.throw tasks.ConstraintError
 
 			removedType = repo.removeTypeById 'myType'
-			removedType.should.eql myType
+			removedType.should.equal myType
 			should.not.exist repo.getTypeById 'myType'
 			repo.getTypeCount().should.equal 0
 
@@ -25,8 +25,8 @@
 			repo = new tasks.Repo
 			myType = asType 'myType', 'sampleInput'
 			repo.on 'addType', (type) ->
-				type.should.eql myType
-				repo.getTypeById('myType').should.eql myType
+				type.should.equal myType
+				repo.getTypeById('myType').should.equal myType
 				repo.getTypeCount().should.equal 1
 			repo.addType myType
 
@@ -34,7 +34,7 @@
 			repo = new tasks.Repo
 			myType = repo.addType asType 'myType', 'sampleInput'
 			repo.on 'removeType', (type) ->
-				type.should.eql myType
+				type.should.equal myType
 				should.not.exist repo.getTypeById 'myType'
 				repo.getTypeCount().should.equal 0
 			repo.removeTypeById 'myType'
@@ -54,14 +54,14 @@
 			should.not.exist group.repo
 
 			repo.addGroup group
-			repo.getGroupByTypeId('myType').should.eql group
+			repo.getGroupByTypeId('myType').should.equal group
 			repo.getGroupCount().should.equal 1
 			group.repo.should.equal repo
 
 			(-> repo.addGroup asGroup myType).should.throw tasks.ConstraintError
 
 			removedGroup = repo.removeGroupByTypeId 'myType'
-			removedGroup.should.eql group
+			removedGroup.should.equal group
 			should.not.exist removedGroup.repo
 			should.not.exist repo.getGroupByTypeId 'myType'
 			repo.getGroupCount().should.equal 0
@@ -72,8 +72,8 @@
 			repo = new tasks.Repo
 			group = asGroup repo.addType asType 'myType'
 			repo.on 'addGroup', (addedGroup) ->
-				addedGroup.should.eql group
-				repo.getGroupByTypeId('myType').should.eql addedGroup
+				addedGroup.should.equal group
+				repo.getGroupByTypeId('myType').should.equal addedGroup
 				repo.getGroupCount().should.equal 1
 			repo.addGroup group
 
@@ -81,7 +81,7 @@
 			repo = new tasks.Repo
 			group = repo.addGroup asGroup repo.addType asType 'myType'
 			repo.on 'removeGroup', (removedGroup) ->
-				removedGroup.should.eql group
+				removedGroup.should.equal group
 				should.not.exist repo.getGroupByTypeId 'myType'
 				repo.getGroupCount().should.equal 0
 			repo.removeGroupByTypeId 'myType'
@@ -104,13 +104,13 @@
 			myType = asType 'myType'
 			group = asGroup myType
 			myTask = group.addTask asTask 'myTask', myType
-			group.getTaskById('myTask').should.eql myTask
+			group.getTaskById('myTask').should.equal myTask
 			group.getTaskCount().should.equal 1
 
 			(-> group.addTask asTask 'myTask', myType).should.throw tasks.ConstraintError
 
 			removedTask = group.removeTaskById 'myTask'
-			removedTask.should.eql myTask
+			removedTask.should.equal myTask
 			should.not.exist group.getTaskById 'myTask'
 			group.getTaskCount().should.equal 0
 
