@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"description": "BROwser CLOud",
 	"scripts": {
-	  "test": "mocha"
+	  "test": "cake test"
 	},
 	"repository": {
 		"type" : "git",
@@ -13,8 +13,12 @@
 		"coffee-script": "1.4.x"
 	},
 	"devDependencies": {
-		"should": "*",
-		"mocha": "*"
+		"chai": "1.5.0",
+		"mocha": "1.8.1",
+		"express": "3.1.0",
+		"coffee-middle": "0.0.2",
+		"socket.io": "0.9.13",
+		"open": "0.0.3"
 	},
 	"keywords": [
 	  "cloud",
