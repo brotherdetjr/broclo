@@ -21,22 +21,24 @@
 
 			(-> repo.removeTypeById 'myType').should.throw tasks.ConstraintError
 
-		it 'should emit addType event', ->
+		it 'should emit addType event', (done) ->
 			repo = new tasks.Repo
 			myType = asType 'myType', 'sampleInput'
 			repo.on 'addType', (type) ->
 				type.should.equal myType
 				repo.getTypeById('myType').should.equal myType
 				repo.getTypeCount().should.equal 1
+				done()
 			repo.addType myType
 
-		it 'should emit removeType event', ->
+		it 'should emit removeType event', (done) ->
 			repo = new tasks.Repo
 			myType = repo.addType asType 'myType', 'sampleInput'
 			repo.on 'removeType', (type) ->
 				type.should.equal myType
 				should.not.exist repo.getTypeById 'myType'
 				repo.getTypeCount().should.equal 0
+				done()
 			repo.removeTypeById 'myType'
 
 		it 'should not allow to remove the type when correspondent group exists', ->
@@ -68,22 +70,24 @@
 
 			(-> repo.removeGroupByTypeId 'myType').should.throw tasks.ConstraintError
 
-		it 'should emit addGroup event', ->
+		it 'should emit addGroup event', (done) ->
 			repo = new tasks.Repo
 			group = asGroup repo.addType asType 'myType'
 			repo.on 'addGroup', (addedGroup) ->
 				addedGroup.should.equal group
 				repo.getGroupByTypeId('myType').should.equal addedGroup
 				repo.getGroupCount().should.equal 1
+				done()
 			repo.addGroup group
 
-		it 'should emit removeGroup event', ->
+		it 'should emit removeGroup event', (done) ->
 			repo = new tasks.Repo
 			group = repo.addGroup asGroup repo.addType asType 'myType'
 			repo.on 'removeGroup', (removedGroup) ->
 				removedGroup.should.equal group
 				should.not.exist repo.getGroupByTypeId 'myType'
 				repo.getGroupCount().should.equal 0
+				done()
 			repo.removeGroupByTypeId 'myType'
 
 		it 'should not allow to remove not empty group', ->
@@ -128,6 +132,26 @@
 			group.getTaskCount().should.equal 0
 
 			(-> group.removeTaskById 'myTask').should.throw tasks.ConstraintError
+
+		it 'should emit addTask event', (done) ->
+			group = asGroup asType 'myType'
+			myTask = asTask 'myTask', group.type
+			group.on 'addTask', (addedTask) ->
+				addedTask.should.equal myTask
+				group.getTaskById('myTask').should.equal addedTask
+				group.getTaskCount().should.equal 1
+				done()
+			group.addTask myTask
+
+		it 'should emit removeTask event', (done) ->
+			group = asGroup asType 'myType'
+			myTask = group.addTask asTask('myTask', group.type)
+			group.on 'removeTask', (removedTask) ->
+				removedTask.should.equal myTask
+				should.not.exist group.getTaskById 'myTask'
+				group.getTaskCount().should.equal 0
+				done()
+			group.removeTaskById 'myTask'
 
 		it 'should not allow to add task with improper type', ->
 			group = asGroup asType 'myType'
