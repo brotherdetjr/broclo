@@ -86,8 +86,13 @@
 				repo.getGroupCount().should.equal 0
 			repo.removeGroupByTypeId 'myType'
 
-# TODO
-#		it 'should not allow to remove not empty group', ->
+		it 'should not allow to remove not empty group', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			group = repo.addGroup asGroup myType
+			group.addTask asTask 'myTask', myType
+			(-> repo.removeGroupByTypeId 'myType')
+				.should.throw tasks.ConstraintError
 
 		it 'should not allow to add a group of type that has not been added to repo', ->
 			repo = new tasks.Repo
@@ -111,8 +116,10 @@
 
 			(-> group.removeTaskById 'myTask').should.throw tasks.ConstraintError
 
-# TODO
-#		it 'should not allow to add task with improper type', ->
+		it 'should not allow to add task with improper type', ->
+			group = asGroup asType 'myType'
+			(-> group.addTask asTask('myTask'), asType('wrongType'))
+				.should.throw tasks.ConstraintError
 
 # TODO
 #		it 'should not allow to add task with id that already exists in repo', ->

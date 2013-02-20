@@ -57,7 +57,7 @@
 			@repo = undefined
 
 		addTask: (task) ->
-			if @getTaskById(task.id)?
+			if @getTaskById(task.id)? or task.type != @type
 				throw new ConstraintError
 			@tasks[task.id] = task
 			@emit 'addTask', task
