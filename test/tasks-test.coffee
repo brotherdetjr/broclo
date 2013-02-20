@@ -90,11 +90,24 @@
 				done()
 			repo.removeGroupByTypeId 'myType'
 
+		it 'should not allow to add not empty groups', ->
+			# Otherwise we will have to replace referenced entities
+			# for all the object graph.
+			# See 'should replace Task#type with' and
+			# 'should replace Group#type with' tests.
+			# This constraint is acceptable and simplifies the Repo logic a lot.
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			group = asGroup myType
+			group.addTask asTask('myTask', myType)
+
+			(-> repo.addGroup group).should.throw tasks.ConstraintError
+
 		it 'should not allow to remove not empty group', ->
 			repo = new tasks.Repo
 			myType = repo.addType asType 'myType'
 			group = repo.addGroup asGroup myType
-			group.addTask asTask 'myTask', myType
+			group.addTask asTask('myTask', myType)
 			(-> repo.removeGroupByTypeId 'myType')
 				.should.throw tasks.ConstraintError
 
@@ -120,11 +133,11 @@
 		it 'should add, remove, retrieve and count tasks', ->
 			myType = asType 'myType'
 			group = asGroup myType
-			myTask = group.addTask asTask 'myTask', myType
+			myTask = group.addTask asTask('myTask', myType)
 			group.getTaskById('myTask').should.equal myTask
 			group.getTaskCount().should.equal 1
 
-			(-> group.addTask asTask 'myTask', myType).should.throw tasks.ConstraintError
+			(-> group.addTask asTask('myTask', myType)).should.throw tasks.ConstraintError
 
 			removedTask = group.removeTaskById 'myTask'
 			removedTask.should.equal myTask

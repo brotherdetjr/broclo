@@ -25,7 +25,9 @@
 		getTypeCount: -> utils.countKeys @types
 
 		addGroup: (group) ->
-			if @getGroupByTypeId(group.type.id)? or not @getTypeById(group.type.id)?
+			if @getGroupByTypeId(group.type.id)? or
+			not @getTypeById(group.type.id)? or
+			group.getTaskCount() > 0
 				throw new ConstraintError
 			@groups[group.type.id] = group
 			group.repo = @
@@ -100,12 +102,16 @@
 
 			import: (external) ->
 
+	class Filter
+		constructor: ->
+
 	exports.Repo = Repo
 	exports.ConstraintError = ConstraintError
 	exports.Group = Group
 	exports.Type = Type
 	exports.Task = Task
 	exports.Externalizer = Externalizer
+	exports.Filter = Filter
 )(
 	(if exports? then exports else @tasks = {}),
 	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
