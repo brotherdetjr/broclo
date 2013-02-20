@@ -3,7 +3,7 @@ open = require 'open'
 
 browsers = ['chrome', 'firefox']
 port = 80
-#killserver = true
+killserver = true
 
 task 'test', 'Run tests', ->
 	ext = if process.platform == 'win32' then '.cmd' else ''

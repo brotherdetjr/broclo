@@ -28,6 +28,7 @@
 			if @getGroupByTypeId(group.type.id)? or not @getTypeById(group.type.id)?
 				throw new ConstraintError
 			@groups[group.type.id] = group
+			group.repo = @
 			@emit 'addGroup', group
 			group
 
@@ -36,6 +37,7 @@
 			if not group? or group.getTaskCount() != 0
 				throw new ConstraintError
 			delete @groups[id]
+			group.repo = undefined
 			@emit 'removeGroup', group
 			group
 
@@ -52,10 +54,29 @@
 	class Group
 		constructor: (@type) ->
 			@tasks = {}
+			@repo = undefined
+
+		addTask: (task) ->
+			if @getTaskById(task.id)?
+				throw new ConstraintError
+			@tasks[task.id] = task
+			@emit 'addTask', task
+			task
+
+		removeTaskById: (id) ->
+			task = @getTaskById id
+			if not task? then throw new ConstraintError
+			delete @tasks[id]
+			@emit 'removeTask', task
+			task
+
+		getTaskById: (id) -> @tasks[id]
 
 		getTaskCount: -> utils.countKeys @tasks
 
 		@asGroup: (type) -> new Group type
+
+	utils.mixin Group, EventEmitter
 
 	class Type
 		constructor: (@id, @sampleInput) ->
@@ -66,6 +87,8 @@
 		# Task's id must be unique through all the Repo
 		# Relates to Type as 0..N to 1
 		constructor: (@id, @type, @since = new Date) ->
+
+		@asTask: (id, type, since) -> new Task id, type, since
 
 	class Externalizer
 		constructor: ->
