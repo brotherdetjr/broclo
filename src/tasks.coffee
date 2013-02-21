@@ -122,10 +122,24 @@
 	class Externalizer
 		constructor: ->
 
-		@repo: ->
+		@repo:
 			export: (repo) ->
+				result = {}
+				for typeId, type of repo.types
+					result[typeId] = {sampleInput: type.sampleInput,  tasks: {}}
+					for taskId, task of repo.getGroupByTypeId(typeId).tasks
+						result[typeId].tasks[taskId] = {since: task.since}
+				result
 
 			import: (external) ->
+				repo = new Repo
+				for typeIdSrc, typeSrc of external
+					type = repo.addType Type.asType typeIdSrc
+					type.sampleInput = typeSrc.sampleInput
+					group = repo.addGroup Group.asGroup type
+					for taskIdSrc, taskSrc of typeSrc.tasks
+						group.addTask Task.asTask(taskIdSrc, type, taskSrc.since)
+				repo
 
 	class Filter
 		constructor: ->
