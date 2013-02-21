@@ -17,4 +17,7 @@
 			result++
 		result
 
+	exports.NotImplementedError = class extends Error
+		constructor: ->
+
 )(if exports? then exports else @utils = {})

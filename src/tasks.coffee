@@ -142,7 +142,59 @@
 				repo
 
 	class Filter
-		constructor: ->
+		constructor: (@repo) ->
+
+		accepts: (task) -> throw new utils.NotImplementedError
+
+	class FilterImpl extends Filter
+		constructor: (repo) ->
+			super repo
+			@anyTask = true
+			@joinedGroups = {}
+			for typeId, group of @repo.groups
+				@joinedGroups[typeId] = group
+			@joinedTasks = {}
+
+		joinAnyTask: -> @anyTask = true
+
+		leaveAnyTask: -> @anyTask = false
+
+		toggleAnyTask: -> @anyTask = not @anyTask
+
+		joinGroup: (group) ->
+			@joinedGroups[group.type.id] = group
+
+		leaveGroup: (group) ->
+			delete @joinedGroups[group.type.id]
+
+		groupJoined: (group) ->
+			@joinedGroups[group.type.id]?
+
+		toggleGroup: (group) ->
+			if @groupJoined group
+				@leaveGroup group
+			else
+				@joinGroup group
+
+		joinTask: (task) ->
+			@joinedTasks[task.id] = task
+
+		leaveTask: (task) ->
+			delete @joinedTasks[task.id]
+
+		taskJoined: (task) ->
+			@joinedTasks[task.id]?
+
+		toggleTask: (task) ->
+			if @taskJoined task
+				@leaveTask task
+			else
+				@joinTask task
+
+		accepts: (task) ->
+			@anyTask or
+			@groupJoined(@repo.getGroupByTypeId(task.type.id)) or
+			@taskJoined task
 
 	exports.Repo = Repo
 	exports.ConstraintError = ConstraintError
@@ -151,6 +203,7 @@
 	exports.Task = Task
 	exports.Externalizer = Externalizer
 	exports.Filter = Filter
+	exports.FilterImpl = FilterImpl
 )(
 	(if exports? then exports else @tasks = {}),
 	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
