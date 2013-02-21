@@ -162,6 +162,43 @@
 			should.not.exist anotherGroup.getTaskById 'anotherTask'
 			anotherGroup.getTaskCount().should.equal 0
 
+		it 'should count tasks through all the repo', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			anotherType = repo.addType asType 'anotherType'
+			repo.addGroup asGroup myType
+			repo.addGroup asGroup anotherType
+
+			repo.getTaskCount().should.equal 0
+			repo.addTask asTask('myTask', myType)
+			repo.addTask asTask('oneMoreTask', myType)
+			repo.addTask asTask('anotherTask', anotherType)
+			repo.getTaskCount().should.equal 3
+
+		it 'should delegate addTask event', (done) ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			myTask = asTask 'myTask', myType
+			repo.on 'addTask', (addedTask) ->
+				addedTask.should.equal myTask
+				repo.getTaskById('myTask').should.equal addedTask
+				repo.getTaskCount().should.equal 1
+				done()
+			group = repo.addGroup asGroup myType
+			group.addTask myTask
+
+		it 'should delegate removeTask event', (done) ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			group = repo.addGroup asGroup myType
+			myTask = repo.addTask asTask('myTask', myType)
+			repo.on 'removeTask', (removedTask) ->
+				removedTask.should.equal myTask
+				should.not.exist repo.getTaskById('myTask')
+				repo.getTaskCount().should.equal 0
+				done()
+			group.removeTaskById 'myTask'
+
 	describe 'Group', ->
 		it 'should add, remove, retrieve and count tasks', ->
 			myType = asType 'myType'

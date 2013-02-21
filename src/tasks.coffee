@@ -32,6 +32,10 @@
 			@groups[group.type.id] = group
 			group.repo = @
 			group.type = @getTypeById group.type.id
+			group.on 'addTask', (addedTask) =>
+				@emit 'addTask', addedTask
+			group.on 'removeTask', (addedTask) =>
+				@emit 'removeTask', addedTask
 			@emit 'addGroup', group
 			group
 
@@ -60,6 +64,12 @@
 		removeTaskById: (id) ->
 			@getGroupByTypeId(@getTaskById(id).type.id)
 				.removeTaskById id
+
+		getTaskCount: ->
+			result = 0
+			for typeId, group of @groups
+				result += group.getTaskCount()
+			result
 
 	utils.mixin Repo, EventEmitter
 
