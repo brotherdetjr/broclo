@@ -355,6 +355,28 @@
 			filter.toggleGroup myGroup
 			filter.groupJoined(myGroup).should.be.true
 
+		it 'should let join, leave, toggle task', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+			myTask = repo.addTask asTask('myTask', myGroup.type)
+			oneMoreTask = repo.addTask asTask('oneMoreTask', myGroup.type)
+			anotherTask = repo.addTask asTask('anotherTask', anotherGroup.type)
+			filter = new tasks.Filter repo
+
+			filter.taskJoined(myTask).should.be.false
+			filter.taskJoined(oneMoreTask).should.be.false
+			filter.taskJoined(anotherTask).should.be.false
+			filter.joinTask myTask
+			filter.taskJoined(myTask).should.be.true
+			filter.taskJoined(oneMoreTask).should.be.false
+			filter.taskJoined(anotherTask).should.be.false
+			filter.leaveTask myTask
+			filter.taskJoined(myTask).should.be.false
+			filter.toggleTask myTask
+			filter.taskJoined(myTask).should.be.true
+			filter.toggleTask myTask
+			filter.taskJoined(myTask).should.be.false
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')
