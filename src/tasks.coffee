@@ -221,7 +221,6 @@
 	exports.Task = Task
 	exports.Externalizer = Externalizer
 	exports.Filter = Filter
-	exports.FilterImpl = FilterImpl
 )(
 	(if exports? then exports else @tasks = {}),
 	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
