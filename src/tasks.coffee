@@ -183,8 +183,6 @@
 			@joinedGroups[group.type.id]?
 
 		toggleGroup: (group) ->
-			if not @repo.getGroupByTypeId(group.type.id)?
-				throw new ConstraintError
 			if @groupJoined group
 				@leaveGroup group
 			else
@@ -208,8 +206,6 @@
 			@joinedTasks[task.id]?
 
 		toggleTask: (task) ->
-			if not @repo.getTaskById(task.id)?
-				throw new ConstraintError
 			if @taskJoined task
 				@leaveTask task
 			else
