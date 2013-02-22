@@ -143,12 +143,6 @@
 
 	class Filter
 		constructor: (@repo) ->
-
-		accepts: (task) -> throw new utils.NotImplementedError
-
-	class FilterImpl extends Filter
-		constructor: (repo) ->
-			super repo
 			@anyTask = true
 			@joinedGroups = {}
 			for typeId, group of @repo.groups
@@ -164,6 +158,8 @@
 		leaveAnyTask: -> @anyTask = false
 
 		toggleAnyTask: -> @anyTask = not @anyTask
+
+		anyTaskJoined: -> @anyTask
 
 		joinGroup: (group) ->
 			if not @repo.getGroupByTypeId(group.type.id)? or

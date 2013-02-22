@@ -324,6 +324,19 @@
 			should.exist anotherTask
 			anotherTask.since.should.equal since
 
+	describe 'Filter', ->
+		it 'should let join, leave, toggle any task', ->
+			filter = new tasks.Filter new tasks.Repo
+			filter.anyTaskJoined().should.be.true
+			filter.leaveAnyTask()
+			filter.anyTaskJoined().should.be.false
+			filter.joinAnyTask()
+			filter.anyTaskJoined().should.be.true
+			filter.toggleAnyTask()
+			filter.anyTaskJoined().should.be.false
+			filter.toggleAnyTask()
+			filter.anyTaskJoined().should.be.true
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')
