@@ -146,7 +146,7 @@
 			@anyTask = true
 			@joinedGroups = {}
 			for typeId, group of @repo.groups
-				@joinedGroups[typeId] = group
+				@joinedGroups[typeId] = true
 			@joinedTasks = {}
 			@repo.on 'removeGroup', (group) ->
 				delete @joinedGroups[group.type.id]

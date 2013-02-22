@@ -357,12 +357,12 @@
 
 		it 'should let join, leave, toggle task', ->
 			repo = new tasks.Repo
+			filter = new tasks.Filter repo
 			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
 			myTask = repo.addTask asTask('myTask', myGroup.type)
 			oneMoreTask = repo.addTask asTask('oneMoreTask', myGroup.type)
 			anotherTask = repo.addTask asTask('anotherTask', anotherGroup.type)
-			filter = new tasks.Filter repo
 
 			filter.taskJoined(myTask).should.be.false
 			filter.taskJoined(oneMoreTask).should.be.false
@@ -377,6 +377,35 @@
 			filter.taskJoined(myTask).should.be.true
 			filter.toggleTask myTask
 			filter.taskJoined(myTask).should.be.false
+
+		it 'should accept proper tasks', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+			myTask = repo.addTask asTask('myTask', myGroup.type)
+			oneMoreTask = repo.addTask asTask('oneMoreTask', myGroup.type)
+			anotherTask = repo.addTask asTask('anotherTask', anotherGroup.type)
+			filter = new tasks.Filter repo
+
+			filter.accepts(myTask).should.be.true
+			filter.accepts(oneMoreTask).should.be.true
+			filter.accepts(anotherTask).should.be.true
+
+			filter.leaveAnyTask()
+			filter.accepts(myTask).should.be.true
+			filter.accepts(oneMoreTask).should.be.true
+			filter.accepts(anotherTask).should.be.true
+
+			filter.leaveGroup myGroup
+			filter.accepts(myTask).should.be.false
+			filter.accepts(oneMoreTask).should.be.false
+			filter.accepts(anotherTask).should.be.true
+
+			filter.joinTask myTask
+			filter.accepts(myTask).should.be.true
+			filter.accepts(oneMoreTask).should.be.false
+			filter.accepts(anotherTask).should.be.true
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')
