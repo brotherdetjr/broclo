@@ -154,6 +154,10 @@
 			for typeId, group of @repo.groups
 				@joinedGroups[typeId] = group
 			@joinedTasks = {}
+			@repo.on 'removeGroup', (group) ->
+				delete @joinedGroups[group.type.id]
+			@repo.on 'removeTask', (task) ->
+				delete @joinedTasks[task.id]
 
 		joinAnyTask: -> @anyTask = true
 
@@ -162,36 +166,58 @@
 		toggleAnyTask: -> @anyTask = not @anyTask
 
 		joinGroup: (group) ->
-			@joinedGroups[group.type.id] = group
+			if not @repo.getGroupByTypeId(group.type.id)? or
+			@joinedGroups[group.type.id]?
+				throw new ConstraintError
+			@joinedGroups[group.type.id] = true
 
 		leaveGroup: (group) ->
+			if not @repo.getGroupByTypeId(group.type.id)? or
+			not @joinedGroups[group.type.id]?
+				throw new ConstraintError
 			delete @joinedGroups[group.type.id]
 
 		groupJoined: (group) ->
+			if not @repo.getGroupByTypeId(group.type.id)?
+				throw new ConstraintError
 			@joinedGroups[group.type.id]?
 
 		toggleGroup: (group) ->
+			if not @repo.getGroupByTypeId(group.type.id)?
+				throw new ConstraintError
 			if @groupJoined group
 				@leaveGroup group
 			else
 				@joinGroup group
 
 		joinTask: (task) ->
-			@joinedTasks[task.id] = task
+			if not @repo.getTaskById(task.id)? or
+			@joinedTasks[task.id]?
+				throw new ConstraintError
+			@joinedTasks[task.id] = true
 
 		leaveTask: (task) ->
+			if not @repo.getTaskById(task.id)? or
+			not @joinedTasks[task.id]?
+				throw new ConstraintError
 			delete @joinedTasks[task.id]
 
 		taskJoined: (task) ->
+			if not @repo.getTaskById(task.id)?
+				throw new ConstraintError
 			@joinedTasks[task.id]?
 
 		toggleTask: (task) ->
+			if not @repo.getTaskById(task.id)?
+				throw new ConstraintError
 			if @taskJoined task
 				@leaveTask task
 			else
 				@joinTask task
 
 		accepts: (task) ->
+			if not @repo.getTaskById(task.id)?
+				throw new ConstraintError
 			@anyTask or
 			@groupJoined(@repo.getGroupByTypeId(task.type.id)) or
 			@taskJoined task
