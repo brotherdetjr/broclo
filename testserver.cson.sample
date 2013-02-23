@@ -1,0 +1,5 @@
+{
+	browsers: ['chrome', 'firefox']
+	port: 81
+	killserver: true
+}
