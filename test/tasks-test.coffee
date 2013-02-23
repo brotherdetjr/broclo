@@ -406,6 +406,29 @@
 			filter.accepts(oneMoreTask).should.be.false
 			filter.accepts(anotherTask).should.be.true
 
+		it 'should not track newly added groups', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			filter = new tasks.Filter repo
+			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+
+			filter.groupJoined(myGroup).should.be.true
+			filter.groupJoined(anotherGroup).should.be.false
+
+		it 'should track when group is removed', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+			filter = new tasks.Filter repo
+
+			filter.groupJoined(myGroup).should.be.true
+			filter.groupJoined(anotherGroup).should.be.true
+
+			repo.removeGroupByTypeId 'myType'
+			(-> filter.groupJoined myGroup).should.throw tasks.ConstraintError
+			should.not.exist filter.joinedGroups['myType']
+			filter.groupJoined(anotherGroup).should.be.true
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')

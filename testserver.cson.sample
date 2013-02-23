@@ -1,3 +1,6 @@
+###
+Rename to testserver.cson
+###
 {
 	browsers: ['chrome', 'firefox']
 	port: 81
