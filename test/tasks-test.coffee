@@ -429,6 +429,21 @@
 			should.not.exist filter.joinedGroups['myType']
 			filter.groupJoined(anotherGroup).should.be.true
 
+		it 'should track when task is removed', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+			myTask = repo.addTask asTask('myTask', myGroup.type)
+			oneMoreTask = repo.addTask asTask('oneMoreTask', myGroup.type)
+			anotherTask = repo.addTask asTask('anotherTask', anotherGroup.type)
+			filter = new tasks.Filter repo
+
+			repo.removeTaskById 'myTask'
+			(-> filter.taskJoined myTask).should.throw tasks.ConstraintError
+			should.not.exist filter.joinedTasks['myTask']
+			filter.taskJoined(oneMoreTask).should.be.false
+			filter.taskJoined(anotherTask).should.be.false
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')
