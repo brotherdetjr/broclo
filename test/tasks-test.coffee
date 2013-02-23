@@ -444,6 +444,21 @@
 			filter.taskJoined(oneMoreTask).should.be.false
 			filter.taskJoined(anotherTask).should.be.false
 
+		it 'should not let to deal with groups with ids that are not in repo', ->
+			repo = new tasks.Repo
+			myType = repo.addType asType 'myType'
+			filter = new tasks.Filter repo
+			myGroup = asGroup myType
+
+			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+
+			repo.addGroup myGroup
+			filter.joinGroup myGroup
+			delete repo.groups.myType # Never do this IRL! Only for test purposes.
+			(-> filter.leaveGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.groupJoined myGroup).should.throw tasks.ConstraintError
+			(-> filter.toggleGroup myGroup).should.throw tasks.ConstraintError
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks')
