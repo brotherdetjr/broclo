@@ -4,7 +4,7 @@
 	asTask = tasks.Task.asTask
 	ConstraintError = utils.ConstraintError
 
-	describe 'Repo', ->
+	describe 'tasks.Repo', ->
 		it 'should add, remove, retrieve and count types', ->
 			repo = new tasks.Repo
 			repo.getTypeCount().should.equal 0
@@ -200,7 +200,7 @@
 				done()
 			group.removeTaskById 'myTask'
 
-	describe 'Group', ->
+	describe 'tasks.Group', ->
 		it 'should add, remove, retrieve and count tasks', ->
 			myType = asType 'myType'
 			group = asGroup myType
@@ -266,7 +266,7 @@
 			(-> anotherGroup.addTask asTask('myTask', anotherType))
 				.should.throw ConstraintError
 
-	describe 'Externalizer', ->
+	describe 'tasks.Externalizer', ->
 		it 'should export repo', ->
 			since = new Date
 			repo = new tasks.Repo
@@ -325,7 +325,7 @@
 			should.exist anotherTask
 			anotherTask.since.should.equal since
 
-	describe 'Filter', ->
+	describe 'tasks.Filter', ->
 		it 'should let join, leave, toggle any task', ->
 			filter = new tasks.Filter new tasks.Repo
 			filter.anyTaskJoined().should.be.true
