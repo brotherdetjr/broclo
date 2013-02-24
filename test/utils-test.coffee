@@ -1,6 +1,7 @@
 ((should, utils) ->
 
 	ConstraintError = utils.ConstraintError
+	NotImplementedError = utils.NotImplementedError
 
 	class A
 		constructor: (@a) ->
@@ -19,20 +20,21 @@
 			@b = b
 			@a + @b
 
-	describe 'utils.wrap', (done) ->
+		throwingMethod: -> throw new NotImplementedError
+
+	describe 'utils.resolveWrapper', (done) ->
 		it 'should be transparent when ConstraintError is not thrown', ->
-			b = new B
-			proxy = utils.wrap {src: b}
+			proxy = utils.wrap new B, utils.resolveWrapper
 			proxy.setAndGetDoubledA(1).should.equal 2
 			proxy.setBAndGetAPlusB(2).should.equal 3
 
 		it 'should call resolveConflict() when ConstraintError is thrown', (done) ->
-			b = new B
-			proxy = utils.wrap
-				src: b
-				resolveConflict: (event) ->
-					done()
+			proxy = utils.wrap new B, utils.resolveWrapper, (event) -> done()
 			proxy.setBAndGetAPlusB 2
+
+		it 'should call rethrow other errors than ConstraintError', ->
+			proxy = utils.wrap new B, utils.resolveWrapper
+			(-> proxy.throwingMethod()).should.throw NotImplementedError
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @utils? then @utils else require '../src/utils')

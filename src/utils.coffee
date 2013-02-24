@@ -23,23 +23,24 @@
 	exports.ConstraintError = class ConstraintError extends Error
 		constructor: ->
 
-	wrapFunc = (func, config) -> ->
+	exports.resolveWrapper = (func, name, self, resolver) -> ->
 		try
-			func.apply config.src, arguments
+			func.apply self, arguments
 		catch error
 			if error instanceof exports.ConstraintError
-				config.resolveConflict?.call config.src,
+				resolver?.call self,
 					method: func
 					args: arguments
 					error: error
 			else
 				throw error
 
-	exports.wrap = (config) ->
-			proxy = {}
-			for key, value of config.src
-				if key != 'constructor' and value instanceof Function
-					proxy[key] = wrapFunc value, config
-			proxy
+	exports.wrap = (obj, wrapper, config, filter = -> true) ->
+		proxy = {}
+		for key, value of obj
+			if key != 'constructor' and value instanceof Function and
+			filter key, value, obj
+				proxy[key] = wrapper value, key, obj, config
+		proxy
 
 )(if exports? then exports else @utils = {})
