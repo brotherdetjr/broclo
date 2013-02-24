@@ -1,7 +1,8 @@
-((should, tasks) ->
+((should, tasks, utils) ->
 	asType = tasks.Type.asType
 	asGroup = tasks.Group.asGroup
 	asTask = tasks.Task.asTask
+	ConstraintError = utils.ConstraintError
 
 	describe 'Repo', ->
 		it 'should add, remove, retrieve and count types', ->
@@ -12,14 +13,14 @@
 			repo.getTypeById('myType').should.equal myType
 			repo.getTypeCount().should.equal 1
 
-			(-> repo.addType asType 'myType').should.throw tasks.ConstraintError
+			(-> repo.addType asType 'myType').should.throw ConstraintError
 
 			removedType = repo.removeTypeById 'myType'
 			removedType.should.equal myType
 			should.not.exist repo.getTypeById 'myType'
 			repo.getTypeCount().should.equal 0
 
-			(-> repo.removeTypeById 'myType').should.throw tasks.ConstraintError
+			(-> repo.removeTypeById 'myType').should.throw ConstraintError
 
 		it 'should emit addType event', (done) ->
 			repo = new tasks.Repo
@@ -45,7 +46,7 @@
 			repo = new tasks.Repo
 			myType = repo.addType asType 'myType'
 			repo.addGroup asGroup myType
-			(-> repo.removeTypeById 'myType').should.throw tasks.ConstraintError
+			(-> repo.removeTypeById 'myType').should.throw ConstraintError
 
 		it 'should add, remove, retrieve and count groups', ->
 			repo = new tasks.Repo
@@ -60,7 +61,7 @@
 			repo.getGroupCount().should.equal 1
 			group.repo.should.equal repo
 
-			(-> repo.addGroup asGroup myType).should.throw tasks.ConstraintError
+			(-> repo.addGroup asGroup myType).should.throw ConstraintError
 
 			removedGroup = repo.removeGroupByTypeId 'myType'
 			removedGroup.should.equal group
@@ -68,7 +69,7 @@
 			should.not.exist repo.getGroupByTypeId 'myType'
 			repo.getGroupCount().should.equal 0
 
-			(-> repo.removeGroupByTypeId 'myType').should.throw tasks.ConstraintError
+			(-> repo.removeGroupByTypeId 'myType').should.throw ConstraintError
 
 		it 'should emit addGroup event', (done) ->
 			repo = new tasks.Repo
@@ -101,7 +102,7 @@
 			group = asGroup myType
 			group.addTask asTask('myTask', myType)
 
-			(-> repo.addGroup group).should.throw tasks.ConstraintError
+			(-> repo.addGroup group).should.throw ConstraintError
 
 		it 'should not allow to remove not empty group', ->
 			repo = new tasks.Repo
@@ -109,12 +110,12 @@
 			group = repo.addGroup asGroup myType
 			group.addTask asTask('myTask', myType)
 			(-> repo.removeGroupByTypeId 'myType')
-				.should.throw tasks.ConstraintError
+				.should.throw ConstraintError
 
 		it 'should not allow to add a group of type that has not been added to repo', ->
 			repo = new tasks.Repo
 			(-> repo.addGroup asGroup asType 'myType')
-				.should.throw tasks.ConstraintError
+				.should.throw ConstraintError
 
 		it 'should replace Group#type with referential ("persisted") Type instance', ->
 			repo = new tasks.Repo
@@ -208,14 +209,14 @@
 			group.getTaskCount().should.equal 1
 
 			(-> group.addTask asTask('myTask', myType))
-				.should.throw tasks.ConstraintError
+				.should.throw ConstraintError
 
 			removedTask = group.removeTaskById 'myTask'
 			removedTask.should.equal myTask
 			should.not.exist group.getTaskById 'myTask'
 			group.getTaskCount().should.equal 0
 
-			(-> group.removeTaskById 'myTask').should.throw tasks.ConstraintError
+			(-> group.removeTaskById 'myTask').should.throw ConstraintError
 
 		it 'should emit addTask event', (done) ->
 			group = asGroup asType 'myType'
@@ -240,7 +241,7 @@
 		it 'should not allow to add task with improper type', ->
 			group = asGroup asType 'myType'
 			(-> group.addTask asTask('myTask', asType 'wrongType'))
-				.should.throw tasks.ConstraintError
+				.should.throw ConstraintError
 
 		it 'should replace Task#type with referential ("persisted") Type instance', ->
 			myType = asType 'myType'
@@ -263,7 +264,7 @@
 			myGroup.addTask asTask('myTask', myType)
 
 			(-> anotherGroup.addTask asTask('myTask', anotherType))
-				.should.throw tasks.ConstraintError
+				.should.throw ConstraintError
 
 	describe 'Externalizer', ->
 		it 'should export repo', ->
@@ -425,7 +426,7 @@
 			filter.groupJoined(anotherGroup).should.be.true
 
 			repo.removeGroupByTypeId 'myType'
-			(-> filter.groupJoined myGroup).should.throw tasks.ConstraintError
+			(-> filter.groupJoined myGroup).should.throw ConstraintError
 			should.not.exist filter.joinedGroups['myType']
 			filter.groupJoined(anotherGroup).should.be.true
 
@@ -439,7 +440,7 @@
 			filter = new tasks.Filter repo
 
 			repo.removeTaskById 'myTask'
-			(-> filter.taskJoined myTask).should.throw tasks.ConstraintError
+			(-> filter.taskJoined myTask).should.throw ConstraintError
 			should.not.exist filter.joinedTasks['myTask']
 			filter.taskJoined(oneMoreTask).should.be.false
 			filter.taskJoined(anotherTask).should.be.false
@@ -450,14 +451,14 @@
 			filter = new tasks.Filter repo
 			myGroup = asGroup myType
 
-			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.joinGroup myGroup).should.throw ConstraintError
 
 			repo.addGroup myGroup
 			filter.joinGroup myGroup
 			delete repo.groups.myType # Never do this IRL! Only for test purposes.
-			(-> filter.leaveGroup myGroup).should.throw tasks.ConstraintError
-			(-> filter.groupJoined myGroup).should.throw tasks.ConstraintError
-			(-> filter.toggleGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.leaveGroup myGroup).should.throw ConstraintError
+			(-> filter.groupJoined myGroup).should.throw ConstraintError
+			(-> filter.toggleGroup myGroup).should.throw ConstraintError
 
 		it 'should not let to deal with the tasks whose ids that are not in repo', ->
 			repo = new tasks.Repo
@@ -465,24 +466,24 @@
 			filter = new tasks.Filter repo
 			myTask = asTask 'myTask', myGroup.type
 
-			(-> filter.joinTask myTask).should.throw tasks.ConstraintError
+			(-> filter.joinTask myTask).should.throw ConstraintError
 
 			repo.addTask myTask
 			filter.joinTask myTask
 			delete repo.groups.myType.tasks.myTask # Never do this IRL! Only for test purposes.
-			(-> filter.leaveTask myTask).should.throw tasks.ConstraintError
-			(-> filter.taskJoined myTask).should.throw tasks.ConstraintError
-			(-> filter.toggleTask myTask).should.throw tasks.ConstraintError
+			(-> filter.leaveTask myTask).should.throw ConstraintError
+			(-> filter.taskJoined myTask).should.throw ConstraintError
+			(-> filter.toggleTask myTask).should.throw ConstraintError
 
 		it 'should not let join the group when already joined and leave when not', ->
 			repo = new tasks.Repo
 			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 			filter = new tasks.Filter repo
 
-			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.joinGroup myGroup).should.throw ConstraintError
 
 			filter.leaveGroup myGroup
-			(-> filter.leaveGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.leaveGroup myGroup).should.throw ConstraintError
 
 		it 'should not let join the task when already joined and leave when not', ->
 			repo = new tasks.Repo
@@ -491,12 +492,13 @@
 			filter = new tasks.Filter repo
 
 			filter.joinTask myTask
-			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+			(-> filter.joinGroup myGroup).should.throw ConstraintError
 
 			filter.leaveTask myTask
-			(-> filter.leaveTask myTask).should.throw tasks.ConstraintError
+			(-> filter.leaveTask myTask).should.throw ConstraintError
 
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
-	(if @tasks? then @tasks else require '../src/tasks')
+	(if @tasks? then @tasks else require '../src/tasks'),
+	(if @utils? then @utils else require '../src/utils')
 )

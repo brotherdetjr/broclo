@@ -20,4 +20,7 @@
 	exports.NotImplementedError = class extends Error
 		constructor: ->
 
+	exports.ConstraintError = class ConstraintError extends Error
+		constructor: ->
+
 )(if exports? then exports else @utils = {})

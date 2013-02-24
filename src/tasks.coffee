@@ -1,4 +1,5 @@
 ((exports, EventEmitter, utils) ->
+	ConstraintError = utils.ConstraintError
 
 	class Repo
 		constructor: ->
@@ -72,9 +73,6 @@
 			result
 
 	utils.mixin Repo, EventEmitter
-
-	class ConstraintError extends Error
-		constructor: ->
 
 	# Relates to Type as 0..1 to 1
 	class Group
@@ -215,7 +213,6 @@
 			@taskJoined task
 
 	exports.Repo = Repo
-	exports.ConstraintError = ConstraintError
 	exports.Group = Group
 	exports.Type = Type
 	exports.Task = Task
