@@ -444,7 +444,7 @@
 			filter.taskJoined(oneMoreTask).should.be.false
 			filter.taskJoined(anotherTask).should.be.false
 
-		it 'should not let to deal with groups with ids that are not in repo', ->
+		it 'should not let to deal with the groups whose ids that are not in repo', ->
 			repo = new tasks.Repo
 			myType = repo.addType asType 'myType'
 			filter = new tasks.Filter repo
@@ -459,7 +459,7 @@
 			(-> filter.groupJoined myGroup).should.throw tasks.ConstraintError
 			(-> filter.toggleGroup myGroup).should.throw tasks.ConstraintError
 
-		it 'should not let to deal with tasks with ids that are not in repo', ->
+		it 'should not let to deal with the tasks whose ids that are not in repo', ->
 			repo = new tasks.Repo
 			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 			filter = new tasks.Filter repo
@@ -473,6 +473,28 @@
 			(-> filter.leaveTask myTask).should.throw tasks.ConstraintError
 			(-> filter.taskJoined myTask).should.throw tasks.ConstraintError
 			(-> filter.toggleTask myTask).should.throw tasks.ConstraintError
+
+		it 'should not let join the group when already joined and leave when not', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			filter = new tasks.Filter repo
+
+			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+
+			filter.leaveGroup myGroup
+			(-> filter.leaveGroup myGroup).should.throw tasks.ConstraintError
+
+		it 'should not let join the task when already joined and leave when not', ->
+			repo = new tasks.Repo
+			myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+			myTask = repo.addTask asTask 'myTask', myGroup.type
+			filter = new tasks.Filter repo
+
+			filter.joinTask myTask
+			(-> filter.joinGroup myGroup).should.throw tasks.ConstraintError
+
+			filter.leaveTask myTask
+			(-> filter.leaveTask myTask).should.throw tasks.ConstraintError
 
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
