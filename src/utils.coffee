@@ -43,4 +43,10 @@
 				proxy[key] = wrapper value, key, obj, config
 		proxy
 
+	exports.nextTick = (func) ->
+		if process?
+			process.nextTick func
+		else
+			setTimeout func, 0
+
 )(if exports? then exports else @utils = {})
