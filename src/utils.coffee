@@ -67,6 +67,6 @@
 		setTimeout ->
 			func.call @
 			done()
-		, @._runnable._timeout / 20
+		, @_runnable._timeout / 20
 
 )(if exports? then exports else @utils = {})
