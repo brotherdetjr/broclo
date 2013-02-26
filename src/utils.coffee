@@ -49,4 +49,24 @@
 		else
 			setTimeout func, 0
 
+	###
+	Special helper method for Mocha+Sinon.JS spies
+	
+	Usage:
+	it 'should blah blah', do ->
+		callback = sinon.spy()
+		someAsyncService.doMyDay 42, callback
+		utils.inTheEnd ->
+			spy.calledOnce.should.be.true
+			...
+
+	Notice *do* keyword after it '...'
+	Also inTheEnd call should be the last expression (implicitly returned).
+	###
+	exports.inTheEnd = (func) -> (done) ->
+		setTimeout ->
+			func.call @
+			done()
+		, @._runnable._timeout / 20
+
 )(if exports? then exports else @utils = {})
