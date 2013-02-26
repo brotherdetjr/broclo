@@ -267,7 +267,7 @@
 				(-> anotherGroup.addTask asTask('myTask', anotherType))
 					.should.throw ConstraintError
 
-		describe 'Externalizer', ->
+		describe 'externalizer', ->
 			it 'should export repo', ->
 				since = new Date
 				repo = new tasks.Repo
@@ -279,7 +279,7 @@
 				repo.addTask asTask('oneMoreTask', myType, since)
 				repo.addTask asTask('anotherTask', anotherType, since)
 
-				tasks.Externalizer.repo.export(repo).should.eql
+				tasks.externalizer.repo.export(repo).should.eql
 					myType:
 						sampleInput: 'sampleInput'
 						tasks:
@@ -292,7 +292,7 @@
 
 			it 'should import repo', ->
 				since = new Date
-				repo = tasks.Externalizer.repo.import
+				repo = tasks.externalizer.repo.import
 					myType:
 						sampleInput: 'sampleInput'
 						tasks:
