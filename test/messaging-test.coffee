@@ -22,8 +22,10 @@
 				inTheEnd ->
 					spy.calledOnce.should.be.true
 
-			it 'should emit event the next tick after the server side has emitted', do ->
+			it 'should call listeners the next tick after the server side has emitted', do ->
 				spy = sinon.spy()
+				anotherSpy = sinon.spy()
+				yetAnotherSpy = sinon.spy()
 				server = new messaging.InProcServer
 				client = new messaging.InProcClient
 				client.connect server
@@ -31,10 +33,14 @@
 					socket.emit 'myEvent', 'a', 'b', 'c'
 					socket.emit 'myEvent', 'd', 'e'
 				client.on 'myEvent', spy
+				client.once 'myEvent', anotherSpy
+				client.on 'myAnotherEvent', yetAnotherSpy
 				inTheEnd ->
 					spy.calledTwice.should.be.true
 					spy.calledWith('a', 'b', 'c').should.be.true
 					spy.calledWith('d', 'e').should.be.true
+					anotherSpy.calledOnce.should.be.true
+					yetAnotherSpy.callCount.should.equal 0
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @sinon? then @sinon else require('sinon')),
