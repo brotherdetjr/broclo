@@ -40,10 +40,10 @@
 					@client.eventEmitter.emit.apply @client.eventEmitter, args
 
 			on: (event, listener) ->
-				@eventEmmiter.on event, listener
+				@eventEmitter.on event, listener
 
 			once: (event, listener) ->
-				@eventEmmiter.once event, listener
+				@eventEmitter.once event, listener
 
 	utils.mixin InProcServer, EventEmitter
 

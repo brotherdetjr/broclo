@@ -12,6 +12,27 @@
 				inTheEnd ->
 					spy.calledOnce.should.be.true
 
+			it 'should call listeners the next tick after the client side has emitted', do ->
+				spy = sinon.spy()
+				anotherSpy = sinon.spy()
+				yetAnotherSpy = sinon.spy()
+				server = new messaging.InProcServer
+				client = new messaging.InProcClient
+				client.connect server
+				server.on 'connection', (socket) ->
+					socket.on 'myEvent', spy
+					socket.once 'myEvent', anotherSpy
+					socket.on 'myAnotherEvent', yetAnotherSpy
+				client.on 'connect', ->
+					client.emit 'myEvent', 'a', 'b', 'c'
+					client.emit 'myEvent', 'd', 'e'
+				inTheEnd ->
+					spy.calledTwice.should.be.true
+					spy.calledWith('a', 'b', 'c').should.be.true
+					spy.calledWith('d', 'e').should.be.true
+					anotherSpy.calledOnce.should.be.true
+					yetAnotherSpy.callCount.should.equal 0
+
 		describe 'InProcClient', ->
 			it 'should emit \'connect\' the next tick after connected', do ->
 				spy = sinon.spy()
