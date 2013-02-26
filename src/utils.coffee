@@ -56,14 +56,14 @@
 	it 'should blah blah', do ->
 		callback = sinon.spy()
 		someAsyncService.doMyDay 42, callback
-		utils.inTheEnd ->
+		utils.eventually ->
 			spy.calledOnce.should.be.true
 			...
 
 	Notice *do* keyword after it '...'
-	Also inTheEnd call should be the last expression (implicitly returned).
+	Also eventually() call should be the last expression (implicitly returned).
 	###
-	exports.inTheEnd = (func) -> (done) ->
+	exports.eventually = (func) -> (done) ->
 		setTimeout ->
 			func.call @
 			done()

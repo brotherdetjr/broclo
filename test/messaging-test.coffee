@@ -1,6 +1,6 @@
 ((should, sinon, utils, messaging) ->
 
-	inTheEnd = utils.inTheEnd
+	eventually = utils.eventually
 
 	describe 'messaging', ->
 		describe 'InProcServer', ->
@@ -9,7 +9,7 @@
 				server = new messaging.InProcServer
 				new messaging.InProcClient().connect server
 				server.on 'connection', spy
-				inTheEnd ->
+				eventually ->
 					spy.calledOnce.should.be.true
 
 			it 'should call listeners the next tick after the client side has emitted', do ->
@@ -26,7 +26,7 @@
 				client.on 'connect', ->
 					client.emit 'myEvent', 'a', 'b', 'c'
 					client.emit 'myEvent', 'd', 'e'
-				inTheEnd ->
+				eventually ->
 					spy.calledTwice.should.be.true
 					spy.calledWith('a', 'b', 'c').should.be.true
 					spy.calledWith('d', 'e').should.be.true
@@ -40,7 +40,7 @@
 				client = new messaging.InProcClient
 				client.connect server
 				client.on 'connect', spy
-				inTheEnd ->
+				eventually ->
 					spy.calledOnce.should.be.true
 
 			it 'should call listeners the next tick after the server side has emitted', do ->
@@ -56,7 +56,7 @@
 				client.on 'myEvent', spy
 				client.once 'myEvent', anotherSpy
 				client.on 'myAnotherEvent', yetAnotherSpy
-				inTheEnd ->
+				eventually ->
 					spy.calledTwice.should.be.true
 					spy.calledWith('a', 'b', 'c').should.be.true
 					spy.calledWith('d', 'e').should.be.true
