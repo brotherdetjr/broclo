@@ -6,6 +6,15 @@
 
 	describe 'tasks', ->
 		describe 'Repo', ->
+			it 'should return typeId->type map via getter', ->
+				repo = new tasks.Repo
+				myType = repo.addType asType 'myType'
+				anotherType = repo.addType asType 'anotherType'
+				types = repo.getTypes()
+				types.myType.should.equal myType
+				types.anotherType.should.equal anotherType
+				utils.countKeys(types).should.equal 2
+
 			it 'should add, remove, retrieve and count types', ->
 				repo = new tasks.Repo
 				repo.getTypeCount().should.equal 0
