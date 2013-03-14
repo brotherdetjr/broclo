@@ -4,19 +4,24 @@
 	nextTick = utils.nextTick
 
 	###
-	Interfaces to implement (eg. basing on Socket.IO)
+	Interfaces to implement (eg. basing on Socket.IO http://socket.io)
 	###
 
 	class Server
 		constructor: ->
 
+		# 'connection' event callback should take Socket instance as an argument
 		on: -> throw new NotImplementedError
 
 	class Client
 		constructor: ->
 
-		connect: -> throw new NotImplementedError
+		# server - object representing the server
+		#	given client can connect to
+		# Returns Socket instance
+		connect: (server) -> throw new NotImplementedError
 
+	class Socket
 		on: (event, listener) -> throw new NotImplementedError
 
 		once: (event, listener) -> throw new NotImplementedError
@@ -30,33 +35,30 @@
 	class InProcServer extends Server
 		constructor: ->
 
-		@ClientSocket: class
-			constructor: (@client) ->
-				@eventEmitter = new EventEmitter
-
-			emit: ->
-				args = arguments
-				nextTick =>
-					@client.eventEmitter.emit.apply @client.eventEmitter, args
-
-			on: (event, listener) ->
-				@eventEmitter.on event, listener
-
-			once: (event, listener) ->
-				@eventEmitter.once event, listener
-
 	utils.mixin InProcServer, EventEmitter
 
 	class InProcClient extends Client
 		constructor: ->
+
+		# For the in-process communication
+		# connect accepts InProcServer instance as
+		# a server arg
+		connect: (server) ->
+			socket = new InProcSocket
+			oppositeSocket = new InProcSocket socket
+			socket.oppositeSocket = oppositeSocket
+			nextTick -> server.emit 'connection', oppositeSocket
+			nextTick -> socket.eventEmitter.emit 'connect'
+			socket
+
+	class InProcSocket extends Socket
+		constructor: (@oppositeSocket) ->
 			@eventEmitter = new EventEmitter
 
-		connect: (server) ->
-			@clientSocket = new InProcServer.ClientSocket @
+		emit: ->
+			args = arguments
 			nextTick =>
-				server.emit 'connection', @clientSocket
-			nextTick =>
-				@eventEmitter.emit 'connect'
+				@oppositeSocket.eventEmitter.emit.apply @oppositeSocket.eventEmitter, args
 
 		on: (event, listener) ->
 			@eventEmitter.on event, listener
@@ -64,15 +66,12 @@
 		once: (event, listener) ->
 			@eventEmitter.once event, listener
 
-		emit: ->
-			args = arguments
-			nextTick =>
-				@clientSocket.eventEmitter.emit.apply @clientSocket.eventEmitter, args
-
 	exports.Server = Server
 	exports.Client = Client
 	exports.InProcServer = InProcServer
 	exports.InProcClient = InProcClient
+	exports.Socket = Socket
+	exports.InProcSocket = InProcSocket
 
 )(
 	if exports? then exports else @messaging = {},
