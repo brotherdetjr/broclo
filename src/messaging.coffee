@@ -21,13 +21,6 @@
 		# Returns Socket instance
 		connect: (server) -> throw new NotImplementedError
 
-	class Socket
-		on: (event, listener) -> throw new NotImplementedError
-
-		once: (event, listener) -> throw new NotImplementedError
-
-		emit: -> throw new NotImplementedError
-
 	###
 	In-process messaging for testing purposes
 	###
@@ -51,7 +44,7 @@
 			nextTick -> socket.eventEmitter.emit 'connect'
 			socket
 
-	class InProcSocket extends Socket
+	class InProcSocket
 		constructor: (@oppositeSocket) ->
 			@eventEmitter = new EventEmitter
 
@@ -70,8 +63,6 @@
 	exports.Client = Client
 	exports.InProcServer = InProcServer
 	exports.InProcClient = InProcClient
-	exports.Socket = Socket
-	exports.InProcSocket = InProcSocket
 
 )(
 	if exports? then exports else @messaging = {},
