@@ -17,28 +17,34 @@
 	exports.ConstraintError = class ConstraintError extends Error
 		constructor: ->
 
-	exports.delegateResolve = (resolver) -> (func, name, obj) -> ->
-		try
-			func.apply obj, arguments
-		catch error
-			if error instanceof exports.ConstraintError
-				resolver?.call obj,
-					method: func
-					args: arguments
-					error: error
-			else
-				throw error
-
-	exports.delegate = -> (func, name, obj) -> ->
-		obj._wrapped.apply obj._wrapped, arguments
-
-	exports.wrap = (obj, methodWrapper, filter = -> true) ->
+	exports.proxy = (obj, methodWrapper, filter = -> true) ->
 		proxy = {}
+		basicFilter = (key, value) ->
+			key != 'constructor' and value instanceof Function
 		for key, value of obj
-			if key != 'constructor' and value instanceof Function and
-			filter key, value, obj
+			if basicFilter(key, value) and filter(key, value, obj)
 				proxy[key] = methodWrapper value, key, obj
 		proxy
+
+	exports.holder = (obj) ->
+		proxy = exports.proxy obj, (func, name, obj) -> ->
+			proxy._content[name].apply proxy._content, arguments
+		proxy.hold = (obj) -> proxy._content = obj
+		proxy.hold obj
+		proxy
+
+	exports.resolvingProxy = (obj, resolver) ->
+		exports.proxy obj, (func, name, obj) -> ->
+			try
+				func.apply obj, arguments
+			catch error
+				if error instanceof exports.ConstraintError
+					resolver.call obj,
+						method: func
+						args: arguments
+						error: error
+				else
+					throw error
 
 	exports.nextTick = (func) ->
 		if process?

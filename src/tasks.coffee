@@ -190,13 +190,9 @@
 
 	wrap =
 		repo: as:
-			contentHolder: (repo) ->
-				proxy = utils.wrap repo, utils.delegate
-				proxy.takeContent = (wrapped) -> proxy._wrapped = wrapped
-				proxy
-			slave: (repo, externalizer, client) ->
+			slave: (repo, eventEmitter, externalizer, client) ->
 				pullRepo = -> client.emit 'pullRepo'
-				proxy = utils.wrap repo, utils.delegateResolve pullRepo
+				proxy = utils.resolvingProxy utils.holder(repo), pullRepo
 				proxy.on 'addTask', (task) -> client.emit 'addTask', externalizer.task.export task
 				client.on 'addType', (task) -> proxy.addTask externalizer.type.import type
 				client.on 'removeType', (id) -> proxy.removeTypeById id
@@ -204,18 +200,18 @@
 				client.on 'removeGroup', (id) -> proxy.removeGroupByTypeId id
 				client.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
 				client.on 'removeTask', (id) -> proxy.removeTaskById id
-				client.on 'pushRepo', (repo) -> proxy.takeContent externalizer.repo.import repo
+				client.on 'pushRepo', (repo) -> proxy.hold externalizer.repo.import(repo, eventEmitter)
 				pullRepo()
 				proxy
-			master: (repo, externalizer, socket) ->
+			master: (repo, eventEmitter, externalizer, socket) ->
 				pushRepo = -> socket.emit 'pushRepo', externalizer.repo.export repo
-				proxy = utils.wrap repo, utils.delegateResolve pushRepo
-				proxy.on 'addType', (type) -> socket.emit 'addType', externalizer.type.export type
-				proxy.on 'removeType', (type) -> socket.emit 'removeType', type.id
-				proxy.on 'addGroup', (group) -> socket.emit 'addGroup', externalizer.group.export group
-				proxy.on 'removeGroup', (group) -> socket.emit 'removeGroup', group.type.id
-				proxy.on 'addTask', (task) -> socket.emit 'addTask', externalizer.task.export task
-				proxy.on 'removeTask', (task) -> socket.emit 'removeTask', task.id
+				proxy = utils.resolvingProxy repo, pushRepo
+				eventEmitter.on 'addType', (type) -> socket.emit 'addType', externalizer.type.export type
+				eventEmitter.on 'removeType', (type) -> socket.emit 'removeType', type.id
+				eventEmitter.on 'addGroup', (group) -> socket.emit 'addGroup', externalizer.group.export group
+				eventEmitter.on 'removeGroup', (group) -> socket.emit 'removeGroup', group.type.id
+				eventEmitter.on 'addTask', (task) -> socket.emit 'addTask', externalizer.task.export task
+				eventEmitter.on 'removeTask', (task) -> socket.emit 'removeTask', task.id
 				socket.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
 				socket.on 'pullRepo', pushRepo
 				proxy
@@ -230,8 +226,8 @@
 						result[typeId].tasks[taskId] = {since: task.since}
 				result
 
-			import: (external) ->
-				repo = new Repo
+			import: (external, eventEmitter) ->
+				repo = new Repo eventEmitter
 				for typeIdSrc, typeSrc of external
 					type = repo.addType Type.asType typeIdSrc
 					type.sampleInput = typeSrc.sampleInput
