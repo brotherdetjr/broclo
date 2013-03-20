@@ -13,6 +13,11 @@
 		# 'connection' event callback should take Socket instance as an argument
 		on: -> throw new NotImplementedError
 
+		# 'connection' event callback should take Socket instance as an argument
+		once: -> throw new NotImplementedError
+
+		emit: -> throw new NotImplementedError
+
 	class Client
 		constructor: ->
 
@@ -27,8 +32,15 @@
 
 	class InProcServer extends Server
 		constructor: ->
+			@eventEmitter = new EventEmitter
 
-	utils.mixin InProcServer, EventEmitter
+		# 'connection' event callback should take Socket instance as an argument
+		on: -> @eventEmitter.on.apply @eventEmitter, arguments
+
+		# 'connection' event callback should take Socket instance as an argument
+		once: -> @eventEmitter.once.apply @eventEmitter, arguments
+
+		emit: -> @eventEmitter.emit.apply @eventEmitter, arguments
 
 	class InProcClient extends Client
 		constructor: ->

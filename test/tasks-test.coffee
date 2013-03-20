@@ -243,26 +243,6 @@
 
 				(-> group.removeTaskById 'myTask').should.throw ConstraintError
 
-			it 'should emit addTask event', (done) ->
-				group = asGroup asType 'myType'
-				myTask = asTask 'myTask', group.type
-				group.on 'addTask', (addedTask) ->
-					addedTask.should.equal myTask
-					group.getTaskById('myTask').should.equal addedTask
-					group.getTaskCount().should.equal 1
-					done()
-				group.addTask myTask
-
-			it 'should emit removeTask event', (done) ->
-				group = asGroup asType 'myType'
-				myTask = group.addTask asTask('myTask', group.type)
-				group.on 'removeTask', (removedTask) ->
-					removedTask.should.equal myTask
-					should.not.exist group.getTaskById 'myTask'
-					group.getTaskCount().should.equal 0
-					done()
-				group.removeTaskById 'myTask'
-
 			it 'should not allow to add task with improper type', ->
 				group = asGroup asType 'myType'
 				(-> group.addTask asTask('myTask', asType 'wrongType'))
@@ -290,6 +270,39 @@
 
 				(-> anotherGroup.addTask asTask('myTask', anotherType))
 					.should.throw ConstraintError
+
+			describe 'eventEmitter', ->
+				it 'should emit addTask event', (done) ->
+					emitter = new EventEmitter
+					group = asGroup asType('myType'), emitter
+					myTask = asTask 'myTask', group.type
+					emitter.on 'addTask', (addedTask) ->
+						addedTask.should.equal myTask
+						group.getTaskById('myTask').should.equal addedTask
+						group.getTaskCount().should.equal 1
+						done()
+					group.addTask myTask
+
+				it 'should also be created by default and be accessible via "eventEmitter" field', (done) ->
+					group = asGroup asType 'myType'
+					myTask = asTask 'myTask', group.type
+					group.eventEmitter.on 'addTask', (addedTask) ->
+						addedTask.should.equal myTask
+						group.getTaskById('myTask').should.equal addedTask
+						group.getTaskCount().should.equal 1
+						done()
+					group.addTask myTask
+
+				it 'should emit removeTask event', (done) ->
+					emitter = new EventEmitter
+					group = asGroup asType('myType'), emitter
+					myTask = group.addTask asTask('myTask', group.type)
+					emitter.on 'removeTask', (removedTask) ->
+						removedTask.should.equal myTask
+						should.not.exist group.getTaskById 'myTask'
+						group.getTaskCount().should.equal 0
+						done()
+					group.removeTaskById 'myTask'
 
 		describe 'externalizer', ->
 			it 'should export repo', ->

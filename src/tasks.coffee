@@ -35,9 +35,9 @@
 			@groups[group.type.id] = group
 			group.repo = @
 			group.type = @getTypeById group.type.id
-			group.on 'addTask', (addedTask) =>
+			group.eventEmitter.on 'addTask', (addedTask) =>
 				@eventEmitter.emit 'addTask', addedTask
-			group.on 'removeTask', (addedTask) =>
+			group.eventEmitter.on 'removeTask', (addedTask) =>
 				@eventEmitter.emit 'removeTask', addedTask
 			@eventEmitter.emit 'addGroup', group
 			group
@@ -76,7 +76,7 @@
 
 	# Relates to Type as 0..1 to 1
 	class Group
-		constructor: (@type) ->
+		constructor: (@type, @eventEmitter = new EventEmitter) ->
 			@tasks = {}
 			@repo = undefined
 
@@ -87,23 +87,21 @@
 				throw new ConstraintError
 			@tasks[task.id] = task
 			task.type = @type
-			@emit 'addTask', task
+			@eventEmitter.emit 'addTask', task
 			task
 
 		removeTaskById: (id) ->
 			task = @getTaskById id
 			if not task? then throw new ConstraintError
 			delete @tasks[id]
-			@emit 'removeTask', task
+			@eventEmitter.emit 'removeTask', task
 			task
 
 		getTaskById: (id) -> @tasks[id]
 
 		getTaskCount: -> utils.countKeys @tasks
 
-		@asGroup: (type) -> new Group type
-
-	utils.mixin Group, EventEmitter
+		@asGroup: (type, eventEmitter) -> new Group type, eventEmitter
 
 	class Type
 		constructor: (@id, @sampleInput) ->
