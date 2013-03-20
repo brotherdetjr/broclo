@@ -2,7 +2,7 @@
 	ConstraintError = utils.ConstraintError
 
 	class Repo
-		constructor: ->
+		constructor: (@eventEmitter = new EventEmitter) ->
 			@types = {}
 			@groups = {}
 
@@ -12,7 +12,7 @@
 			if @getTypeById(type.id)?
 				throw new ConstraintError
 			@types[type.id] = type
-			@emit 'addType', type
+			@eventEmitter.emit 'addType', type
 			type
 
 		removeTypeById: (id) ->
@@ -20,7 +20,7 @@
 			if not type? or @getGroupByTypeId(id)?
 				throw new ConstraintError
 			delete @types[id]
-			@emit 'removeType', type
+			@eventEmitter.emit 'removeType', type
 			type
 
 		getTypeById: (id) -> @types[id]
@@ -36,10 +36,10 @@
 			group.repo = @
 			group.type = @getTypeById group.type.id
 			group.on 'addTask', (addedTask) =>
-				@emit 'addTask', addedTask
+				@eventEmitter.emit 'addTask', addedTask
 			group.on 'removeTask', (addedTask) =>
-				@emit 'removeTask', addedTask
-			@emit 'addGroup', group
+				@eventEmitter.emit 'removeTask', addedTask
+			@eventEmitter.emit 'addGroup', group
 			group
 
 		removeGroupByTypeId: (id) ->
@@ -48,7 +48,7 @@
 				throw new ConstraintError
 			delete @groups[id]
 			group.repo = undefined
-			@emit 'removeGroup', group
+			@eventEmitter.emit 'removeGroup', group
 			group
 
 		getGroupByTypeId: (id) -> @groups[id]
@@ -73,8 +73,6 @@
 			for typeId, group of @groups
 				result += group.getTaskCount()
 			result
-
-	utils.mixin Repo, EventEmitter
 
 	# Relates to Type as 0..1 to 1
 	class Group
@@ -126,9 +124,9 @@
 			for typeId, group of @repo.groups
 				@joinedGroups[typeId] = true
 			@joinedTasks = {}
-			@repo.on 'removeGroup', (group) =>
+			@repo.eventEmitter.on 'removeGroup', (group) =>
 				delete @joinedGroups[group.type.id]
-			@repo.on 'removeTask', (task) =>
+			@repo.eventEmitter.on 'removeTask', (task) =>
 				delete @joinedTasks[task.id]
 
 		joinAnyTask: -> @anyTask = true
@@ -194,9 +192,13 @@
 
 	wrap =
 		repo: as:
+			contentHolder: (repo) ->
+				proxy = utils.wrap repo, utils.delegate
+				proxy.takeContent = (wrapped) -> proxy._wrapped = wrapped
+				proxy
 			slave: (repo, externalizer, client) ->
 				pullRepo = -> client.emit 'pullRepo'
-				proxy = utils.wrap repo, utils.resolveWrapper pullRepo
+				proxy = utils.wrap repo, utils.delegateResolve pullRepo
 				proxy.on 'addTask', (task) -> client.emit 'addTask', externalizer.task.export task
 				client.on 'addType', (task) -> proxy.addTask externalizer.type.import type
 				client.on 'removeType', (id) -> proxy.removeTypeById id
@@ -204,12 +206,12 @@
 				client.on 'removeGroup', (id) -> proxy.removeGroupByTypeId id
 				client.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
 				client.on 'removeTask', (id) -> proxy.removeTaskById id
-				client.on 'pushRepo', (repo) -> proxy.push externalizer.repo.import repo
+				client.on 'pushRepo', (repo) -> proxy.takeContent externalizer.repo.import repo
 				pullRepo()
 				proxy
 			master: (repo, externalizer, socket) ->
 				pushRepo = -> socket.emit 'pushRepo', externalizer.repo.export repo
-				proxy = utils.wrap repo, utils.resolveWrapper pushRepo
+				proxy = utils.wrap repo, utils.delegateResolve pushRepo
 				proxy.on 'addType', (type) -> socket.emit 'addType', externalizer.type.export type
 				proxy.on 'removeType', (type) -> socket.emit 'removeType', type.id
 				proxy.on 'addGroup', (group) -> socket.emit 'addGroup', externalizer.group.export group

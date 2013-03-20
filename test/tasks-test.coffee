@@ -1,4 +1,4 @@
-((should, tasks, utils) ->
+((should, tasks, EventEmitter, utils) ->
 	asType = tasks.Type.asType
 	asGroup = tasks.Group.asGroup
 	asTask = tasks.Task.asTask
@@ -32,26 +32,6 @@
 
 				(-> repo.removeTypeById 'myType').should.throw ConstraintError
 
-			it 'should emit addType event', (done) ->
-				repo = new tasks.Repo
-				myType = asType 'myType', 'sampleInput'
-				repo.on 'addType', (type) ->
-					type.should.equal myType
-					repo.getTypeById('myType').should.equal myType
-					repo.getTypeCount().should.equal 1
-					done()
-				repo.addType myType
-
-			it 'should emit removeType event', (done) ->
-				repo = new tasks.Repo
-				myType = repo.addType asType 'myType', 'sampleInput'
-				repo.on 'removeType', (type) ->
-					type.should.equal myType
-					should.not.exist repo.getTypeById 'myType'
-					repo.getTypeCount().should.equal 0
-					done()
-				repo.removeTypeById 'myType'
-
 			it 'should not allow to remove the type when correspondent group exists', ->
 				repo = new tasks.Repo
 				myType = repo.addType asType 'myType'
@@ -80,26 +60,6 @@
 				repo.getGroupCount().should.equal 0
 
 				(-> repo.removeGroupByTypeId 'myType').should.throw ConstraintError
-
-			it 'should emit addGroup event', (done) ->
-				repo = new tasks.Repo
-				group = asGroup repo.addType asType 'myType'
-				repo.on 'addGroup', (addedGroup) ->
-					addedGroup.should.equal group
-					repo.getGroupByTypeId('myType').should.equal addedGroup
-					repo.getGroupCount().should.equal 1
-					done()
-				repo.addGroup group
-
-			it 'should emit removeGroup event', (done) ->
-				repo = new tasks.Repo
-				group = repo.addGroup asGroup repo.addType asType 'myType'
-				repo.on 'removeGroup', (removedGroup) ->
-					removedGroup.should.equal group
-					should.not.exist repo.getGroupByTypeId 'myType'
-					repo.getGroupCount().should.equal 0
-					done()
-				repo.removeGroupByTypeId 'myType'
 
 			it 'should not allow to add not empty groups', ->
 				# Otherwise we will have to replace referenced entities
@@ -186,29 +146,84 @@
 				repo.addTask asTask('anotherTask', anotherType)
 				repo.getTaskCount().should.equal 3
 
-			it 'should delegate addTask event', (done) ->
-				repo = new tasks.Repo
-				myType = repo.addType asType 'myType'
-				myTask = asTask 'myTask', myType
-				repo.on 'addTask', (addedTask) ->
-					addedTask.should.equal myTask
-					repo.getTaskById('myTask').should.equal addedTask
-					repo.getTaskCount().should.equal 1
-					done()
-				group = repo.addGroup asGroup myType
-				group.addTask myTask
+			describe 'eventEmitter', ->
+				it 'should emit addType event', (done) ->
+					emitter = new EventEmitter
+					repo = new tasks.Repo emitter
+					myType = asType 'myType', 'sampleInput'
+					emitter.on 'addType', (type) ->
+						type.should.equal myType
+						repo.getTypeById('myType').should.equal myType
+						repo.getTypeCount().should.equal 1
+						done()
+					repo.addType myType
 
-			it 'should delegate removeTask event', (done) ->
-				repo = new tasks.Repo
-				myType = repo.addType asType 'myType'
-				group = repo.addGroup asGroup myType
-				myTask = repo.addTask asTask('myTask', myType)
-				repo.on 'removeTask', (removedTask) ->
-					removedTask.should.equal myTask
-					should.not.exist repo.getTaskById('myTask')
-					repo.getTaskCount().should.equal 0
-					done()
-				group.removeTaskById 'myTask'
+				it 'should also be created by default and be accessible via "eventEmitter" field', (done) ->
+					repo = new tasks.Repo
+					myType = asType 'myType', 'sampleInput'
+					repo.eventEmitter.on 'addType', (type) ->
+						type.should.equal myType
+						repo.getTypeById('myType').should.equal myType
+						repo.getTypeCount().should.equal 1
+						done()
+					repo.addType myType
+
+				it 'should emit removeType event', (done) ->
+					emitter = new EventEmitter
+					repo = new tasks.Repo emitter
+					myType = repo.addType asType 'myType', 'sampleInput'
+					emitter.on 'removeType', (type) ->
+						type.should.equal myType
+						should.not.exist repo.getTypeById 'myType'
+						repo.getTypeCount().should.equal 0
+						done()
+					repo.removeTypeById 'myType'
+
+				it 'should emit addGroup event', (done) ->
+					emitter = new EventEmitter
+					repo = new tasks.Repo emitter
+					group = asGroup repo.addType asType 'myType'
+					emitter.on 'addGroup', (addedGroup) ->
+						addedGroup.should.equal group
+						repo.getGroupByTypeId('myType').should.equal addedGroup
+						repo.getGroupCount().should.equal 1
+						done()
+					repo.addGroup group
+
+				it 'should emit removeGroup event', (done) ->
+					emitter = new EventEmitter
+					repo = new tasks.Repo emitter
+					group = repo.addGroup asGroup repo.addType asType 'myType'
+					emitter.on 'removeGroup', (removedGroup) ->
+						removedGroup.should.equal group
+						should.not.exist repo.getGroupByTypeId 'myType'
+						repo.getGroupCount().should.equal 0
+						done()
+					repo.removeGroupByTypeId 'myType'
+
+				it 'should delegate addTask event', (done) ->
+					repo = new tasks.Repo
+					myType = repo.addType asType 'myType'
+					myTask = asTask 'myTask', myType
+					repo.eventEmitter.on 'addTask', (addedTask) ->
+						addedTask.should.equal myTask
+						repo.getTaskById('myTask').should.equal addedTask
+						repo.getTaskCount().should.equal 1
+						done()
+					group = repo.addGroup asGroup myType
+					group.addTask myTask
+
+				it 'should delegate removeTask event', (done) ->
+					repo = new tasks.Repo
+					myType = repo.addType asType 'myType'
+					group = repo.addGroup asGroup myType
+					myTask = repo.addTask asTask('myTask', myType)
+					repo.eventEmitter.on 'removeTask', (removedTask) ->
+						removedTask.should.equal myTask
+						should.not.exist repo.getTaskById('myTask')
+						repo.getTaskCount().should.equal 0
+						done()
+					group.removeTaskById 'myTask'
 
 		describe 'Group', ->
 			it 'should add, remove, retrieve and count tasks', ->
@@ -510,5 +525,6 @@
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
 	(if @tasks? then @tasks else require '../src/tasks'),
+	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
 	(if @utils? then @utils else require '../src/utils')
 )

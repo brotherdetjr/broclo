@@ -25,20 +25,20 @@
 		throwingMethod: -> throw new NotImplementedError
 
 	describe 'utils', ->
-		describe 'resolveWrapper', (done) ->
+		describe 'resolveWith', (done) ->
 			it 'should be transparent when ConstraintError is not thrown', ->
-				proxy = utils.wrap new B, utils.resolveWrapper()
+				proxy = utils.wrap new B, utils.delegateResolve()
 				proxy.setAndGetDoubledA(1).should.equal 2
 				proxy.setBAndGetAPlusB(2).should.equal 3
 				proxy.getB().should.equal 2
 
 			it 'should call resolveConflict() when ConstraintError is thrown', (done) ->
-				proxy = utils.wrap new B, utils.resolveWrapper -> done()
+				proxy = utils.wrap new B, utils.delegateResolve -> done()
 				should.not.exist proxy.setBAndGetAPlusB 2
 				should.not.exist proxy.getB()
 
 			it 'should call rethrow other errors than ConstraintError', ->
-				proxy = utils.wrap new B, utils.resolveWrapper()
+				proxy = utils.wrap new B, utils.delegateResolve()
 				(-> proxy.throwingMethod()).should.throw NotImplementedError
 
 )(

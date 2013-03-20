@@ -23,7 +23,7 @@
 	exports.ConstraintError = class ConstraintError extends Error
 		constructor: ->
 
-	exports.resolveWrapper = (resolver) -> (func, name, obj) -> ->
+	exports.delegateResolve = (resolver) -> (func, name, obj) -> ->
 		try
 			func.apply obj, arguments
 		catch error
@@ -34,6 +34,9 @@
 					error: error
 			else
 				throw error
+
+	exports.delegate = -> (func, name, obj) -> ->
+		obj._wrapped.apply obj._wrapped, arguments
 
 	exports.wrap = (obj, methodWrapper, filter = -> true) ->
 		proxy = {}
