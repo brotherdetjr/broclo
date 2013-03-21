@@ -81,6 +81,9 @@
 					obj.sideEffect.should.equal 5
 				emitter.on 'afterSum', afterSpy
 
+				throwedSpy = sinon.spy()
+				emitter.on 'throwedSum', throwedSpy
+
 				proxy = utils.eventProxy obj, emitter
 				proxy.sum 2, 3
 
@@ -88,6 +91,7 @@
 					beforeSpy.calledOnce.should.be.true
 					afterSpy.calledOnce.should.be.true
 					afterSpy.calledAfter(beforeSpy).should.be.true
+					throwedSpy.callCount.should.equal 0
 
 			it 'should emit "before" and "throwed" events when method has thrown an error', do ->
 				emitter = new EventEmitter
