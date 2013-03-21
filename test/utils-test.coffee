@@ -1,7 +1,8 @@
-((should, utils) ->
+((should, sinon, EventEmitter, utils) ->
 
 	ConstraintError = utils.ConstraintError
 	NotImplementedError = utils.NotImplementedError
+	eventually = utils.eventually
 
 	class A
 		constructor: (@a) ->
@@ -24,10 +25,12 @@
 
 		getB: () -> @b
 
+		sum: (a, b) -> @sideEffect = a + b
+
 		throwingMethod: -> throw new NotImplementedError
 
 	describe 'utils', ->
-		describe 'resolvingProxy', (done) ->
+		describe 'resolvingProxy', ->
 			it 'should be transparent when ConstraintError is not thrown', ->
 				proxy = utils.resolvingProxy new B
 				proxy.setAndGetDoubledA(1).should.equal 2
@@ -43,7 +46,7 @@
 				proxy = utils.resolvingProxy new B
 				(-> proxy.throwingMethod()).should.throw NotImplementedError
 
-		describe 'holder', (done) ->
+		describe 'holder', ->
 			it 'should delegate calls to wrapped object', ->
 				holder = utils.holder new A
 				doubledA = holder.setAndGetDoubledA 33
@@ -55,7 +58,65 @@
 				holder.getA().should.equal 1
 				holder.hold new A 2
 				holder.getA().should.equal 2
+
+		describe 'eventProxy', ->
+			it 'should emit "before" and "after" events', do ->
+				emitter = new EventEmitter
+				obj = new B
+
+				beforeSpy = sinon.spy (event) ->
+					event.obj.should.equal obj
+					event.args[0].should.equal 2
+					event.args[1].should.equal 3
+					event.args.length.should.equal 2
+					should.not.exist obj.sideEffect
+				emitter.on 'beforeSum', beforeSpy
+
+				afterSpy = sinon.spy (event) ->
+					event.obj.should.equal obj
+					event.args[0].should.equal 2
+					event.args[1].should.equal 3
+					event.args.length.should.equal 2
+					event.value.should.equal 5
+					obj.sideEffect.should.equal 5
+				emitter.on 'afterSum', afterSpy
+
+				proxy = utils.eventProxy obj, emitter
+				proxy.sum 2, 3
+
+				eventually ->
+					beforeSpy.calledOnce.should.be.true
+					afterSpy.calledOnce.should.be.true
+					afterSpy.calledAfter(beforeSpy).should.be.true
+
+			it 'should not emit any events when calling wrapped methods directly', do ->
+				emitter = new EventEmitter
+				obj = new B 1, 2
+				proxy = utils.eventProxy obj, emitter
+				spy = sinon.spy()
+				emitter.on 'beforeGetB', spy
+				emitter.on 'afterGetB', spy
+				obj.getB
+
+				eventually ->
+					spy.callCount.should.equal 0
+
+		describe 'capitalize', ->
+			it 'should return the word with uppercased first letter', ->
+				utils.capitalize('hello').should.equal 'Hello'
+				utils.capitalize('a').should.equal 'A'
+
+			it 'should leave the word unchanged if the symbol cannot be capitalized', ->
+				utils.capitalize('123').should.equal '123'
+				utils.capitalize('AAA').should.equal 'AAA'
+				utils.capitalize(' leading space').should.equal ' leading space'
+
+			it 'should leave empty string unchanged', ->
+				utils.capitalize('').should.equal ''
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
+	(if @sinon? then @sinon else require('sinon')),
+	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
 	(if @utils? then @utils else require '../src/utils')
 )

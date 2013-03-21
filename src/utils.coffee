@@ -2,6 +2,9 @@
 
 	s4 = -> Math.floor((1 + Math.random()) * 0x10000).toString(16).substring 1
 
+	exports.capitalize = (string) ->
+		string.charAt(0).toUpperCase() + string.slice 1
+
 	exports.guid = ->
 		s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
 
@@ -45,6 +48,17 @@
 						error: error
 				else
 					throw error
+
+	exports.eventProxy = (obj, eventEmitter) ->
+		exports.proxy obj, (func, name, obj) -> ->
+			eventEmitter.emit 'before' + exports.capitalize(name),
+				obj: obj
+				args: arguments
+			value = func.apply obj, arguments
+			eventEmitter.emit 'after' + exports.capitalize(name),
+				obj: obj
+				args: arguments
+				value: value
 
 	exports.nextTick = (func) ->
 		if process?
