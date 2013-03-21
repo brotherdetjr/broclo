@@ -54,7 +54,15 @@
 			eventEmitter.emit 'before' + exports.capitalize(name),
 				obj: obj
 				args: arguments
-			value = func.apply obj, arguments
+			value = undefined
+			try
+				value = func.apply obj, arguments
+			catch error
+				eventEmitter.emit 'throwed' + exports.capitalize(name),
+					obj: obj
+					args: arguments
+					error: error
+				throw error
 			eventEmitter.emit 'after' + exports.capitalize(name),
 				obj: obj
 				args: arguments

@@ -89,6 +89,37 @@
 					afterSpy.calledOnce.should.be.true
 					afterSpy.calledAfter(beforeSpy).should.be.true
 
+			it 'should emit "before" and "throwed" events when method has thrown an error', do ->
+				emitter = new EventEmitter
+				obj = new B
+
+				beforeSpy = sinon.spy (event) ->
+					event.obj.should.equal obj
+					event.args[0].should.equal 2
+					event.args[1].should.equal 3
+					event.args.length.should.equal 2
+				emitter.on 'beforeThrowingMethod', beforeSpy
+
+				afterSpy = sinon.spy()
+				emitter.on 'afterThrowingMethod', afterSpy
+
+				throwedSpy = sinon.spy (event) ->
+					event.obj.should.equal obj
+					event.args[0].should.equal 2
+					event.args[1].should.equal 3
+					event.args.length.should.equal 2
+					event.error.should.be.instanceof NotImplementedError
+				emitter.on 'throwedThrowingMethod', throwedSpy
+
+				proxy = utils.eventProxy obj, emitter
+				(-> proxy.throwingMethod 2, 3).should.throw NotImplementedError
+
+				eventually ->
+					beforeSpy.calledOnce.should.be.true
+					afterSpy.callCount.should.equal 0
+					throwedSpy.calledOnce.should.be.true
+					throwedSpy.calledAfter(beforeSpy).should.be.true
+
 			it 'should not emit any events when calling wrapped methods directly', do ->
 				emitter = new EventEmitter
 				obj = new B 1, 2
