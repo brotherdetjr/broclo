@@ -305,63 +305,76 @@
 					group.removeTaskById 'myTask'
 
 		describe 'externalizer', ->
-			it 'should export repo', ->
-				since = new Date
-				repo = new tasks.Repo
-				myType = repo.addType asType('myType', 'sampleInput')
-				anotherType = repo.addType asType 'anotherType'
-				repo.addGroup asGroup myType
-				repo.addGroup asGroup anotherType
-				repo.addTask asTask('myTask', myType, since)
-				repo.addTask asTask('oneMoreTask', myType, since)
-				repo.addTask asTask('anotherTask', anotherType, since)
+			describe 'repo', ->
+				it 'should export', ->
+					since = new Date
+					repo = new tasks.Repo
+					myType = repo.addType asType('myType', 'sampleInput')
+					anotherType = repo.addType asType 'anotherType'
+					repo.addGroup asGroup myType
+					repo.addGroup asGroup anotherType
+					repo.addTask asTask('myTask', myType, since)
+					repo.addTask asTask('oneMoreTask', myType, since)
+					repo.addTask asTask('anotherTask', anotherType, since)
 
-				tasks.externalizer.repo.export(repo).should.eql
-					myType:
-						sampleInput: 'sampleInput'
-						tasks:
-							myTask: {since: since}
-							oneMoreTask: {since: since}
-					anotherType:
-						sampleInput: undefined
-						tasks:
-							anotherTask: {since: since}
+					tasks.externalizer.repo.export(repo).should.eql
+						myType:
+							sampleInput: 'sampleInput'
+							tasks:
+								myTask: {since: since}
+								oneMoreTask: {since: since}
+						anotherType:
+							sampleInput: undefined
+							tasks:
+								anotherTask: {since: since}
 
-			it 'should import repo', ->
-				since = new Date
-				repo = tasks.externalizer.repo.import
-					myType:
-						sampleInput: 'sampleInput'
-						tasks:
-							myTask: {since: since}
-							oneMoreTask: {since: since}
-					anotherType:
-						sampleInput: undefined
-						tasks:
-							anotherTask: {since: since}
+				it 'should import', ->
+					since = new Date
+					repo = tasks.externalizer.repo.import
+						myType:
+							sampleInput: 'sampleInput'
+							tasks:
+								myTask: {since: since}
+								oneMoreTask: {since: since}
+						anotherType:
+							sampleInput: undefined
+							tasks:
+								anotherTask: {since: since}
 
-				repo.getTypeCount().should.equal 2
-				should.exist repo.getTypeById 'myType'
-				should.exist repo.getTypeById 'anotherType'
-				repo.getTaskCount().should.equal 3
-				repo.getGroupCount().should.equal 2
+					repo.should.be.an.instanceof tasks.Repo
+					repo.getTypeCount().should.equal 2
+					should.exist repo.getTypeById 'myType'
+					should.exist repo.getTypeById 'anotherType'
+					repo.getTaskCount().should.equal 3
+					repo.getGroupCount().should.equal 2
 
-				myGroup = repo.getGroupByTypeId 'myType'
-				should.exist myGroup
-				myGroup.getTaskCount().should.equal 2
-				myTask = myGroup.getTaskById 'myTask'
-				should.exist myTask
-				myTask.since.should.equal since
-				oneMoreTask = myGroup.getTaskById 'oneMoreTask'
-				should.exist oneMoreTask
-				oneMoreTask.since.should.equal since
+					myGroup = repo.getGroupByTypeId 'myType'
+					should.exist myGroup
+					myGroup.getTaskCount().should.equal 2
+					myTask = myGroup.getTaskById 'myTask'
+					should.exist myTask
+					myTask.since.should.equal since
+					oneMoreTask = myGroup.getTaskById 'oneMoreTask'
+					should.exist oneMoreTask
+					oneMoreTask.since.should.equal since
 
-				anotherGroup = repo.getGroupByTypeId 'anotherType'
-				should.exist anotherGroup
-				anotherGroup.getTaskCount().should.equal 1
-				anotherTask = anotherGroup.getTaskById 'anotherTask'
-				should.exist anotherTask
-				anotherTask.since.should.equal since
+					anotherGroup = repo.getGroupByTypeId 'anotherType'
+					should.exist anotherGroup
+					anotherGroup.getTaskCount().should.equal 1
+					anotherTask = anotherGroup.getTaskById 'anotherTask'
+					should.exist anotherTask
+					anotherTask.since.should.equal since
+
+			describe 'type', ->
+				it 'should export', ->
+					external = tasks.externalizer.type.export asType 'myType', 'sampleInput'
+					external.should.eql {id: 'myType', sampleInput: 'sampleInput'}
+
+				it 'should import', ->
+					type = tasks.externalizer.type.import {id: 'myType', sampleInput: 'sampleInput'}
+					type.should.be.an.instanceof tasks.Type
+					type.id.should.equal 'myType'
+					type.sampleInput.should.equal 'sampleInput'
 
 		describe 'Filter', ->
 			it 'should let join, leave, toggle any task', ->
