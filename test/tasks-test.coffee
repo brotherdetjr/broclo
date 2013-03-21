@@ -89,7 +89,7 @@
 
 			it 'should replace Group#type with referential ("persisted") Type instance', ->
 				repo = new tasks.Repo
-				myType = repo.addType asType 'myType'
+				myType = repo.addType asType 'myType', 'sampleInput'
 				myType2 = asType 'myType'
 				group = asGroup myType2
 
@@ -98,6 +98,7 @@
 
 				repo.addGroup group
 				myType.should.equal group.type
+				group.type.sampleInput.should.equal 'sampleInput'
 
 			it 'should search tasks by id through all the repo', ->
 				repo = new tasks.Repo
@@ -375,6 +376,17 @@
 					type.should.be.an.instanceof tasks.Type
 					type.id.should.equal 'myType'
 					type.sampleInput.should.equal 'sampleInput'
+
+			describe 'group', ->
+				it 'should export', ->
+					external = tasks.externalizer.group.export asGroup asType 'myType'
+					external.should.eql {typeId: 'myType'}
+
+				it 'should import', ->
+					group = tasks.externalizer.group.import {typeId: 'myType'}
+					group.should.be.an.instanceof tasks.Group
+					group.type.should.be.an.instanceof tasks.Type
+					group.type.id.should.equal 'myType'
 
 		describe 'Filter', ->
 			it 'should let join, leave, toggle any task', ->
