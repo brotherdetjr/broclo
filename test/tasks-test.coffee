@@ -388,6 +388,25 @@
 					group.type.should.be.an.instanceof tasks.Type
 					group.type.id.should.equal 'myType'
 
+			describe 'task', ->
+				it 'should export', ->
+					since = new Date
+					repo = new tasks.Repo
+					myType = repo.addType asType 'myType', 'sampleInput'
+					repo.addGroup asGroup myType
+					myTask = repo.addTask asTask 'myTask', myType, since
+					external = tasks.externalizer.task.export myTask
+					external.should.eql {id: 'myTask', typeId: 'myType', since: since}
+
+				it 'should import', ->
+					since = new Date
+					task = tasks.externalizer.task.import {id: 'myTask', typeId: 'myType', since: since}
+					task.should.be.an.instanceof tasks.Task
+					task.type.should.be.an.instanceof tasks.Type
+					task.id.should.equal 'myTask'
+					task.type.id.should.equal 'myType'
+					task.since.should.equal since
+
 		describe 'Filter', ->
 			it 'should let join, leave, toggle any task', ->
 				filter = new tasks.Filter new tasks.Repo
