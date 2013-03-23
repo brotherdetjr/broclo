@@ -2,7 +2,9 @@
 	asType = tasks.Type.asType
 	asGroup = tasks.Group.asGroup
 	asTask = tasks.Task.asTask
+	eventProxy = utils.eventProxy
 	ConstraintError = utils.ConstraintError
+	IllegalArgumentsError = utils.IllegalArgumentsError
 
 	describe 'tasks', ->
 		describe 'Repo', ->
@@ -14,6 +16,15 @@
 				types.myType.should.equal myType
 				types.anotherType.should.equal anotherType
 				utils.countKeys(types).should.equal 2
+
+			it 'should return typeId->group map via getter', ->
+				repo = new tasks.Repo
+				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
+				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
+				groups = repo.getGroups()
+				groups.myType.should.equal myGroup
+				groups.anotherType.should.equal anotherGroup
+				utils.countKeys(groups).should.equal 2
 
 			it 'should add, remove, retrieve and count types', ->
 				repo = new tasks.Repo
@@ -147,85 +158,6 @@
 				repo.addTask asTask('anotherTask', anotherType)
 				repo.getTaskCount().should.equal 3
 
-			describe 'eventEmitter', ->
-				it 'should emit addType event', (done) ->
-					emitter = new EventEmitter
-					repo = new tasks.Repo emitter
-					myType = asType 'myType', 'sampleInput'
-					emitter.on 'addType', (type) ->
-						type.should.equal myType
-						repo.getTypeById('myType').should.equal myType
-						repo.getTypeCount().should.equal 1
-						done()
-					repo.addType myType
-
-				it 'should also be created by default and be accessible via "eventEmitter" field', (done) ->
-					repo = new tasks.Repo
-					myType = asType 'myType', 'sampleInput'
-					repo.eventEmitter.on 'addType', (type) ->
-						type.should.equal myType
-						repo.getTypeById('myType').should.equal myType
-						repo.getTypeCount().should.equal 1
-						done()
-					repo.addType myType
-
-				it 'should emit removeType event', (done) ->
-					emitter = new EventEmitter
-					repo = new tasks.Repo emitter
-					myType = repo.addType asType 'myType', 'sampleInput'
-					emitter.on 'removeType', (type) ->
-						type.should.equal myType
-						should.not.exist repo.getTypeById 'myType'
-						repo.getTypeCount().should.equal 0
-						done()
-					repo.removeTypeById 'myType'
-
-				it 'should emit addGroup event', (done) ->
-					emitter = new EventEmitter
-					repo = new tasks.Repo emitter
-					group = asGroup repo.addType asType 'myType'
-					emitter.on 'addGroup', (addedGroup) ->
-						addedGroup.should.equal group
-						repo.getGroupByTypeId('myType').should.equal addedGroup
-						repo.getGroupCount().should.equal 1
-						done()
-					repo.addGroup group
-
-				it 'should emit removeGroup event', (done) ->
-					emitter = new EventEmitter
-					repo = new tasks.Repo emitter
-					group = repo.addGroup asGroup repo.addType asType 'myType'
-					emitter.on 'removeGroup', (removedGroup) ->
-						removedGroup.should.equal group
-						should.not.exist repo.getGroupByTypeId 'myType'
-						repo.getGroupCount().should.equal 0
-						done()
-					repo.removeGroupByTypeId 'myType'
-
-				it 'should delegate addTask event', (done) ->
-					repo = new tasks.Repo
-					myType = repo.addType asType 'myType'
-					myTask = asTask 'myTask', myType
-					repo.eventEmitter.on 'addTask', (addedTask) ->
-						addedTask.should.equal myTask
-						repo.getTaskById('myTask').should.equal addedTask
-						repo.getTaskCount().should.equal 1
-						done()
-					group = repo.addGroup asGroup myType
-					group.addTask myTask
-
-				it 'should delegate removeTask event', (done) ->
-					repo = new tasks.Repo
-					myType = repo.addType asType 'myType'
-					group = repo.addGroup asGroup myType
-					myTask = repo.addTask asTask('myTask', myType)
-					repo.eventEmitter.on 'removeTask', (removedTask) ->
-						removedTask.should.equal myTask
-						should.not.exist repo.getTaskById('myTask')
-						repo.getTaskCount().should.equal 0
-						done()
-					group.removeTaskById 'myTask'
-
 		describe 'Group', ->
 			it 'should add, remove, retrieve and count tasks', ->
 				myType = asType 'myType'
@@ -271,39 +203,6 @@
 
 				(-> anotherGroup.addTask asTask('myTask', anotherType))
 					.should.throw ConstraintError
-
-			describe 'eventEmitter', ->
-				it 'should emit addTask event', (done) ->
-					emitter = new EventEmitter
-					group = asGroup asType('myType'), emitter
-					myTask = asTask 'myTask', group.type
-					emitter.on 'addTask', (addedTask) ->
-						addedTask.should.equal myTask
-						group.getTaskById('myTask').should.equal addedTask
-						group.getTaskCount().should.equal 1
-						done()
-					group.addTask myTask
-
-				it 'should also be created by default and be accessible via "eventEmitter" field', (done) ->
-					group = asGroup asType 'myType'
-					myTask = asTask 'myTask', group.type
-					group.eventEmitter.on 'addTask', (addedTask) ->
-						addedTask.should.equal myTask
-						group.getTaskById('myTask').should.equal addedTask
-						group.getTaskCount().should.equal 1
-						done()
-					group.addTask myTask
-
-				it 'should emit removeTask event', (done) ->
-					emitter = new EventEmitter
-					group = asGroup asType('myType'), emitter
-					myTask = group.addTask asTask('myTask', group.type)
-					emitter.on 'removeTask', (removedTask) ->
-						removedTask.should.equal myTask
-						should.not.exist group.getTaskById 'myTask'
-						group.getTaskCount().should.equal 0
-						done()
-					group.removeTaskById 'myTask'
 
 		describe 'externalizer', ->
 			describe 'repo', ->
@@ -408,8 +307,11 @@
 					task.since.should.equal since
 
 		describe 'Filter', ->
+			it 'should throw IllegalArgumentError when could not obtain EventEmitter instance', ->
+				(-> new tasks.Filter new tasks.Repo).should.throw IllegalArgumentsError
+
 			it 'should let join, leave, toggle any task', ->
-				filter = new tasks.Filter new tasks.Repo
+				filter = new tasks.Filter eventProxy new tasks.Repo
 				filter.anyTaskJoined().should.be.true
 				filter.leaveAnyTask()
 				filter.anyTaskJoined().should.be.false
@@ -421,7 +323,7 @@
 				filter.anyTaskJoined().should.be.true
 
 			it 'should let join, leave, toggle group', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
 				filter = new tasks.Filter repo
@@ -439,7 +341,7 @@
 				filter.groupJoined(myGroup).should.be.true
 
 			it 'should let join, leave, toggle task', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				filter = new tasks.Filter repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
@@ -462,7 +364,7 @@
 				filter.taskJoined(myTask).should.be.false
 
 			it 'should accept proper tasks', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
 				myTask = repo.addTask asTask('myTask', myGroup.type)
@@ -490,7 +392,7 @@
 				filter.accepts(anotherTask).should.be.true
 
 			it 'should not track newly added groups', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				filter = new tasks.Filter repo
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
@@ -499,7 +401,7 @@
 				filter.groupJoined(anotherGroup).should.be.false
 
 			it 'should track when group is removed', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
 				filter = new tasks.Filter repo
@@ -513,7 +415,7 @@
 				filter.groupJoined(anotherGroup).should.be.true
 
 			it 'should track when task is removed', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				anotherGroup = repo.addGroup asGroup repo.addType asType 'anotherType'
 				myTask = repo.addTask asTask('myTask', myGroup.type)
@@ -528,7 +430,7 @@
 				filter.taskJoined(anotherTask).should.be.false
 
 			it 'should not let to deal with the groups whose ids that are not in repo', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myType = repo.addType asType 'myType'
 				filter = new tasks.Filter repo
 				myGroup = asGroup myType
@@ -537,13 +439,13 @@
 
 				repo.addGroup myGroup
 				filter.joinGroup myGroup
-				delete repo.groups.myType # Never do this IRL! Only for test purposes.
+				delete repo.getGroups().myType # Never do this IRL! Only for test purposes.
 				(-> filter.leaveGroup myGroup).should.throw ConstraintError
 				(-> filter.groupJoined myGroup).should.throw ConstraintError
 				(-> filter.toggleGroup myGroup).should.throw ConstraintError
 
 			it 'should not let to deal with the tasks whose ids that are not in repo', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				filter = new tasks.Filter repo
 				myTask = asTask 'myTask', myGroup.type
@@ -552,13 +454,13 @@
 
 				repo.addTask myTask
 				filter.joinTask myTask
-				delete repo.groups.myType.tasks.myTask # Never do this IRL! Only for test purposes.
+				delete repo.getGroups().myType.tasks.myTask # Never do this IRL! Only for test purposes.
 				(-> filter.leaveTask myTask).should.throw ConstraintError
 				(-> filter.taskJoined myTask).should.throw ConstraintError
 				(-> filter.toggleTask myTask).should.throw ConstraintError
 
 			it 'should not let join the group when already joined and leave when not', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				filter = new tasks.Filter repo
 
@@ -568,7 +470,7 @@
 				(-> filter.leaveGroup myGroup).should.throw ConstraintError
 
 			it 'should not let join the task when already joined and leave when not', ->
-				repo = new tasks.Repo
+				repo = eventProxy new tasks.Repo
 				myGroup = repo.addGroup asGroup repo.addType asType 'myType'
 				myTask = repo.addTask asTask 'myTask', myGroup.type
 				filter = new tasks.Filter repo

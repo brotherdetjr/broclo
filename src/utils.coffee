@@ -2,8 +2,9 @@
 
 	s4 = -> Math.floor((1 + Math.random()) * 0x10000).toString(16).substring 1
 
-	exports.capitalize = (string) ->
+	capitalize = (string) ->
 		string.charAt(0).toUpperCase() + string.slice 1
+	exports.capitalize = capitalize
 
 	exports.guid = ->
 		s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4()
@@ -18,6 +19,9 @@
 		constructor: ->
 
 	exports.ConstraintError = class ConstraintError extends Error
+		constructor: ->
+
+	exports.IllegalArgumentsError = class IllegalArgumentsError extends Error
 		constructor: ->
 
 	exports.proxy = (obj, methodWrapper, filter = -> true) ->
@@ -49,17 +53,18 @@
 				else
 					throw error
 
-	exports.eventProxy = (obj, eventEmitter = new EventEmitter) ->
+	exports.eventProxy = (obj, emitter = new EventEmitter) ->
 		proxy = exports.proxy obj, (func, name, obj) -> ->
-			eventEmitter.emit 'before' + exports.capitalize(name), {obj: obj, args: arguments}
+			emitter.emit 'before' + capitalize(name), {obj: obj, args: arguments}
 			value = undefined
 			try
 				value = func.apply obj, arguments
 			catch error
-				eventEmitter.emit 'throwed' + exports.capitalize(name), {obj: obj, args: arguments, error: error}
+				emitter.emit 'throwed' + capitalize(name), {obj: obj, args: arguments, error: error}
 				throw error
-			eventEmitter.emit 'after' + exports.capitalize(name), {obj: obj, args: arguments, value: value}
-		proxy._eventEmitter = eventEmitter
+			emitter.emit 'after' + capitalize(name), {obj: obj, args: arguments, value: value}
+			value
+		proxy._eventEmitter = emitter
 		proxy
 
 	exports.nextTick = (func) ->

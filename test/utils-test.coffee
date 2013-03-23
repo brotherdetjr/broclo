@@ -60,6 +60,10 @@
 				holder.getA().should.equal 2
 
 		describe 'eventProxy', ->
+			it 'should return the value returned by proxied method', ->
+				proxy = utils.eventProxy new B
+				proxy.sum(3, 4).should.equal 7
+
 			it 'should emit "before" and "after" events', do ->
 				emitter = new EventEmitter
 				obj = new B

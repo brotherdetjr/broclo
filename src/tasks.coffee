@@ -1,18 +1,20 @@
-((exports, EventEmitter, utils) ->
+((exports, utils) ->
 	ConstraintError = utils.ConstraintError
+	IllegalArgumentsError = utils.IllegalArgumentsError
 
 	class Repo
-		constructor: (@eventEmitter = new EventEmitter) ->
+		constructor: ->
 			@types = {}
 			@groups = {}
 
 		getTypes: -> @types
 
+		getGroups: -> @groups
+
 		addType: (type) ->
 			if @getTypeById(type.id)?
 				throw new ConstraintError
 			@types[type.id] = type
-			@eventEmitter.emit 'addType', type
 			type
 
 		removeTypeById: (id) ->
@@ -20,7 +22,6 @@
 			if not type? or @getGroupByTypeId(id)?
 				throw new ConstraintError
 			delete @types[id]
-			@eventEmitter.emit 'removeType', type
 			type
 
 		getTypeById: (id) -> @types[id]
@@ -35,11 +36,6 @@
 			@groups[group.type.id] = group
 			group.repo = @
 			group.type = @getTypeById group.type.id
-			group.eventEmitter.on 'addTask', (addedTask) =>
-				@eventEmitter.emit 'addTask', addedTask
-			group.eventEmitter.on 'removeTask', (addedTask) =>
-				@eventEmitter.emit 'removeTask', addedTask
-			@eventEmitter.emit 'addGroup', group
 			group
 
 		removeGroupByTypeId: (id) ->
@@ -48,7 +44,6 @@
 				throw new ConstraintError
 			delete @groups[id]
 			group.repo = undefined
-			@eventEmitter.emit 'removeGroup', group
 			group
 
 		getGroupByTypeId: (id) -> @groups[id]
@@ -76,7 +71,7 @@
 
 	# Relates to Type as 0..1 to 1
 	class Group
-		constructor: (@type, @eventEmitter = new EventEmitter) ->
+		constructor: (@type) ->
 			@tasks = {}
 			@repo = undefined
 
@@ -87,21 +82,19 @@
 				throw new ConstraintError
 			@tasks[task.id] = task
 			task.type = @type
-			@eventEmitter.emit 'addTask', task
 			task
 
 		removeTaskById: (id) ->
 			task = @getTaskById id
 			if not task? then throw new ConstraintError
 			delete @tasks[id]
-			@eventEmitter.emit 'removeTask', task
 			task
 
 		getTaskById: (id) -> @tasks[id]
 
 		getTaskCount: -> utils.countKeys @tasks
 
-		@asGroup: (type, eventEmitter) -> new Group type, eventEmitter
+		@asGroup: (type) -> new Group type
 
 	class Type
 		constructor: (@id, @sampleInput) ->
@@ -117,15 +110,16 @@
 
 	class Filter
 		constructor: (@repo) ->
+			if not @repo._eventEmitter? then throw new IllegalArgumentsError
 			@anyTask = true
 			@joinedGroups = {}
-			for typeId, group of @repo.groups
+			for typeId, group of @repo.getGroups()
 				@joinedGroups[typeId] = true
 			@joinedTasks = {}
-			@repo.eventEmitter.on 'removeGroup', (group) =>
-				delete @joinedGroups[group.type.id]
-			@repo.eventEmitter.on 'removeTask', (task) =>
-				delete @joinedTasks[task.id]
+			@repo._eventEmitter.on 'afterRemoveGroupByTypeId', (event) =>
+				delete @joinedGroups[event.args[0]]
+			@repo._eventEmitter.on 'afterRemoveTaskById', (event) =>
+				delete @joinedTasks[event.args[0]]
 
 		joinAnyTask: -> @anyTask = true
 
@@ -254,6 +248,5 @@
 	exports.Filter = Filter
 )(
 	(if exports? then exports else @tasks = {}),
-	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
 	(if @utils? then @utils else require './utils')
 )
