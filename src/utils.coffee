@@ -1,4 +1,4 @@
-((exports) ->
+((exports, EventEmitter) ->
 
 	s4 = -> Math.floor((1 + Math.random()) * 0x10000).toString(16).substring 1
 
@@ -32,8 +32,8 @@
 	exports.holder = (obj) ->
 		proxy = exports.proxy obj, (func, name, obj) -> ->
 			proxy._content[name].apply proxy._content, arguments
-		proxy.hold = (obj) -> proxy._content = obj
-		proxy.hold obj
+		proxy._hold = (obj) -> proxy._content = obj
+		proxy._hold obj
 		proxy
 
 	exports.resolvingProxy = (obj, resolver) ->
@@ -49,24 +49,18 @@
 				else
 					throw error
 
-	exports.eventProxy = (obj, eventEmitter) ->
-		exports.proxy obj, (func, name, obj) -> ->
-			eventEmitter.emit 'before' + exports.capitalize(name),
-				obj: obj
-				args: arguments
+	exports.eventProxy = (obj, eventEmitter = new EventEmitter) ->
+		proxy = exports.proxy obj, (func, name, obj) -> ->
+			eventEmitter.emit 'before' + exports.capitalize(name), {obj: obj, args: arguments}
 			value = undefined
 			try
 				value = func.apply obj, arguments
 			catch error
-				eventEmitter.emit 'throwed' + exports.capitalize(name),
-					obj: obj
-					args: arguments
-					error: error
+				eventEmitter.emit 'throwed' + exports.capitalize(name), {obj: obj, args: arguments, error: error}
 				throw error
-			eventEmitter.emit 'after' + exports.capitalize(name),
-				obj: obj
-				args: arguments
-				value: value
+			eventEmitter.emit 'after' + exports.capitalize(name), {obj: obj, args: arguments, value: value}
+		proxy._eventEmitter = eventEmitter
+		proxy
 
 	exports.nextTick = (func) ->
 		if process?
@@ -94,4 +88,7 @@
 			done()
 		, @_runnable._timeout / 20
 
-)(if exports? then exports else @utils = {})
+)(
+	(if exports? then exports else @utils = {}),
+	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter)
+)

@@ -200,7 +200,7 @@
 				client.on 'removeGroup', (id) -> proxy.removeGroupByTypeId id
 				client.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
 				client.on 'removeTask', (id) -> proxy.removeTaskById id
-				client.on 'pushRepo', (repo) -> proxy.hold externalizer.repo.import(repo, eventEmitter)
+				client.on 'pushRepo', (repo) -> proxy._hold externalizer.repo.import(repo, eventEmitter)
 				pullRepo()
 				proxy
 			master: (repo, eventEmitter, externalizer, socket) ->

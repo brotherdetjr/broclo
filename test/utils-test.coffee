@@ -56,7 +56,7 @@
 			it 'should take new content and delegate all the calls to it', ->
 				holder = utils.holder new A 1
 				holder.getA().should.equal 1
-				holder.hold new A 2
+				holder._hold new A 2
 				holder.getA().should.equal 2
 
 		describe 'eventProxy', ->
@@ -94,18 +94,18 @@
 					throwedSpy.callCount.should.equal 0
 
 			it 'should emit "before" and "throwed" events when method has thrown an error', do ->
-				emitter = new EventEmitter
 				obj = new B
+				proxy = utils.eventProxy obj
 
 				beforeSpy = sinon.spy (event) ->
 					event.obj.should.equal obj
 					event.args[0].should.equal 2
 					event.args[1].should.equal 3
 					event.args.length.should.equal 2
-				emitter.on 'beforeThrowingMethod', beforeSpy
+				proxy._eventEmitter.on 'beforeThrowingMethod', beforeSpy
 
 				afterSpy = sinon.spy()
-				emitter.on 'afterThrowingMethod', afterSpy
+				proxy._eventEmitter.on 'afterThrowingMethod', afterSpy
 
 				throwedSpy = sinon.spy (event) ->
 					event.obj.should.equal obj
@@ -113,9 +113,8 @@
 					event.args[1].should.equal 3
 					event.args.length.should.equal 2
 					event.error.should.be.instanceof NotImplementedError
-				emitter.on 'throwedThrowingMethod', throwedSpy
+				proxy._eventEmitter.on 'throwedThrowingMethod', throwedSpy
 
-				proxy = utils.eventProxy obj, emitter
 				(-> proxy.throwingMethod 2, 3).should.throw NotImplementedError
 
 				eventually ->
