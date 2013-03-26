@@ -1,4 +1,4 @@
-((exports, EventEmitter, utils) ->
+((exports, deferred, EventEmitter, utils) ->
 
 	NotImplementedError = utils.NotImplementedError
 	nextTick = utils.nextTick
@@ -42,6 +42,12 @@
 
 		emit: -> @eventEmitter.emit.apply @eventEmitter, arguments
 
+		# Use waitForConnection() method in unit tests
+		waitForConnection: ->
+			def = deferred()
+			@once 'connection', (socket) -> def.resolve socket
+			def.promise
+
 	class InProcClient extends Client
 		constructor: ->
 
@@ -53,7 +59,7 @@
 			oppositeSocket = new InProcSocket socket
 			socket.oppositeSocket = oppositeSocket
 			nextTick -> server.emit 'connection', oppositeSocket
-			nextTick -> socket.eventEmitter.emit 'connect'
+			nextTick -> socket.eventEmitter.emit 'connect', socket
 			socket
 
 	class InProcSocket
@@ -71,6 +77,12 @@
 		once: (event, listener) ->
 			@eventEmitter.once event, listener
 
+		# Use waitFor(what) method in unit tests
+		waitFor: (what) ->
+			def = deferred()
+			@once what, (data) -> def.resolve data
+			def.promise
+
 	exports.Server = Server
 	exports.Client = Client
 	exports.InProcServer = InProcServer
@@ -78,6 +90,8 @@
 
 )(
 	if exports? then exports else @messaging = {},
+	(if @deferred? then @deferred else require 'deferred'),
 	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
 	(if @utils? then @utils else require './utils')
 )
+

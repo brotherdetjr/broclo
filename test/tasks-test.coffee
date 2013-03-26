@@ -1,4 +1,4 @@
-((should, tasks, EventEmitter, utils) ->
+((should, deferred, tasks, EventEmitter, messaging, utils) ->
 	asType = tasks.Type.asType
 	asGroup = tasks.Group.asGroup
 	asTask = tasks.Task.asTask
@@ -227,6 +227,20 @@
 							sampleInput: undefined
 							tasks:
 								anotherTask: {since: since}
+
+				it 'should export repo that does not have any groups', ->
+					since = new Date
+					repo = new tasks.Repo
+					myType = repo.addType asType('myType', 'sampleInput')
+					anotherType = repo.addType asType 'anotherType'
+
+					tasks.externalizer.repo.export(repo).should.eql
+						myType:
+							sampleInput: 'sampleInput'
+							tasks: {}
+						anotherType:
+							sampleInput: undefined
+							tasks: {}
 
 				it 'should import', ->
 					since = new Date
@@ -481,9 +495,37 @@
 				filter.leaveTask myTask
 				(-> filter.leaveTask myTask).should.throw ConstraintError
 
+		describe 'replicated', ->
+			describe 'repo', ->
+				it 'should be done', (done) ->
+					server = new messaging.InProcServer
+					innerRepo = new tasks.Repo
+					innerRepo.addType asType 'myType', 'sampleInput'
+					masterRepo = null
+					clientSocketA = (new messaging.InProcClient).connect server
+					slaveRepoA = tasks.replicated.repo clientSocketA, -> clientSocketA.emit 'pullingRepo'
+
+					deferred(server.waitForConnection(), clientSocketA.waitFor 'connect')
+					.then ([s]) ->
+						# TODO broadcasting!!!
+						masterRepo = tasks.replicated.repo(
+							s,
+							(-> s.emit 'pushingRepo', tasks.externalizer.repo.export masterRepo),
+							innerRepo
+						)
+						clientSocketA.emit 'pullingRepo'
+						clientSocketA.waitFor 'pushingRepo'
+					.then ->
+						slaveRepoA.getTypes().myType.id.should.equal 'myType'
+						slaveRepoA.getTypes().myType.sampleInput.should.equal 'sampleInput'
+						utils.countKeys(slaveRepoA.getTypes()).should.equal 1
+						done()
+
 )(
 	(if @chai? then @chai.should() else require('chai').should()),
+	(if @deferred? then @deferred else require 'deferred'),
 	(if @tasks? then @tasks else require '../src/tasks'),
 	(if @EventEmitter? then @EventEmitter else require('events').EventEmitter),
+	(if @messaging? then @messaging else require '../src/messaging'),
 	(if @utils? then @utils else require '../src/utils')
 )

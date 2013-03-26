@@ -185,40 +185,16 @@
 			@groupJoined(@repo.getGroupByTypeId(task.type.id)) or
 			@taskJoined task
 
-	replicated =
-		repo: (repo, externalizer, socket, resolver) ->
-			repoHolder = holder repo
-			proxy = eventProxy resolvingProxy repoHolder, resolver
-			proxy._eventEmitter.on 'afterAddType', (event) ->
-				socket.emit 'addType', externalizer.type.export event.value
-			proxy._eventEmitter.on 'afterRemoveTypeById', (event) ->
-				socket.emit 'removeType', event.value.id
-			proxy._eventEmitter.on 'afterAddGroup', (event) ->
-				socket.emit 'addGroup', externalizer.group.export event.value
-			proxy._eventEmitter.on 'afterRemoveGroupById', (event) ->
-				socket.emit 'removeGroup', event.value.id
-			proxy._eventEmitter.on 'afterAddTask', (event) ->
-				socket.emit 'addTask', externalizer.task.export event.value
-			proxy._eventEmitter.on 'afterRemoveTaskById', (event) ->
-				socket.emit 'addTask', event.value.id
-			socket.on 'addType', (task) -> proxy.addTask externalizer.type.import type
-			socket.on 'removeType', (id) -> proxy.removeTypeById id
-			socket.on 'addGroup', (group) -> proxy.addGroup externalizer.group.import group
-			socket.on 'removeGroup', (id) -> proxy.removeGroupByTypeId id
-			socket.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
-			socket.on 'removeTask', (id) -> proxy.removeTaskById id
-			socket.on 'pushRepo', (repo) -> repoHolder._hold externalizer.repo.import repo
-			socket.on 'pullRepo', -> socket.emit 'pushRepo', externalizer.repo.export repo
-			proxy
-
 	externalizer =
 		repo:
 			export: (repo) ->
 				result = {}
 				for typeId, type of repo.getTypes()
 					result[typeId] = {sampleInput: type.sampleInput,  tasks: {}}
-					for taskId, task of repo.getGroupByTypeId(typeId).tasks
-						result[typeId].tasks[taskId] = {since: task.since}
+					group = repo.getGroupByTypeId(typeId)
+					if group?
+						for taskId, task of group.tasks
+							result[typeId].tasks[taskId] = {since: task.since}
 				result
 
 			import: (external, eventEmitter) ->
@@ -241,12 +217,40 @@
 			import: (external) ->
 				Task.asTask external.id, Type.asType(external.typeId), external.since
 
+	replicated =
+		repo: (socket, resolver, repo = new Repo) ->
+			repoHolder = holder repo
+			proxy = eventProxy resolvingProxy repoHolder, resolver
+			proxy._eventEmitter.on 'afterAddType', (event) ->
+				socket.emit 'addType', externalizer.type.export event.value
+			proxy._eventEmitter.on 'afterRemoveTypeById', (event) ->
+				socket.emit 'removeType', event.value.id
+			proxy._eventEmitter.on 'afterAddGroup', (event) ->
+				socket.emit 'addGroup', externalizer.group.export event.value
+			proxy._eventEmitter.on 'afterRemoveGroupById', (event) ->
+				socket.emit 'removeGroup', event.value.id
+			proxy._eventEmitter.on 'afterAddTask', (event) ->
+				socket.emit 'addTask', externalizer.task.export event.value
+			proxy._eventEmitter.on 'afterRemoveTaskById', (event) ->
+				socket.emit 'addTask', event.value.id
+			socket.on 'addType', (task) -> proxy.addTask externalizer.type.import type
+			socket.on 'removeType', (id) -> proxy.removeTypeById id
+			socket.on 'addGroup', (group) -> proxy.addGroup externalizer.group.import group
+			socket.on 'removeGroup', (id) -> proxy.removeGroupByTypeId id
+			socket.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
+			socket.on 'removeTask', (id) -> proxy.removeTaskById id
+			socket.on 'pushingRepo', (repo) -> repoHolder._hold externalizer.repo.import repo
+			socket.on 'pullingRepo', -> socket.emit 'pushingRepo', externalizer.repo.export repo
+			proxy._holder = repoHolder
+			proxy
+
 	exports.Repo = Repo
 	exports.Group = Group
 	exports.Type = Type
 	exports.Task = Task
 	exports.externalizer = externalizer
 	exports.Filter = Filter
+	exports.replicated = replicated
 )(
 	(if exports? then exports else @tasks = {}),
 	(if @utils? then @utils else require './utils')

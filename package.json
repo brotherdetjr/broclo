@@ -20,6 +20,7 @@
 		"coffee-middle": "0.0.2",
 		"socket.io": "0.9.13",
 		"open": "0.0.3",
+		"deferred": "0.6.3",
 		"cson": "1.4.0"
 	},
 	"keywords": [
