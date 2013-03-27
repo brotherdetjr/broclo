@@ -58,7 +58,7 @@
 					spy.calledWith('a', 'b', 'c').should.be.true
 					spy.calledWith('d', 'e').should.be.true
 					anotherSpy.calledOnce.should.be.true
-					anotherSocketSpy.callCount.should.equal 3
+					anotherSocketSpy.calledThrice.should.be.true
 					yetAnotherSpy.callCount.should.equal 0
 					foreignSocketSpy.callCount.should.equal 0
 
