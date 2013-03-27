@@ -33,6 +33,7 @@
 	class InProcServer extends Server
 		constructor: ->
 			@eventEmitter = new EventEmitter
+			@clientSockets = {}
 
 		# 'connection' event callback should take Socket instance as an argument
 		on: -> @eventEmitter.on.apply @eventEmitter, arguments
@@ -41,6 +42,15 @@
 		once: -> @eventEmitter.once.apply @eventEmitter, arguments
 
 		emit: -> @eventEmitter.emit.apply @eventEmitter, arguments
+
+		clientSocket: (oppositeSocket) ->
+			socket = new InProcSocket @, oppositeSocket
+			@clientSockets[socket.id] = socket
+			socket.broadcast =
+				emit: =>
+					for id, clientSocket of @clientSockets
+						clientSocket.emit.apply clientSocket, arguments
+			socket
 
 		# Use waitForConnection() method in unit tests
 		waitForConnection: ->
@@ -55,15 +65,16 @@
 		# connect accepts InProcServer instance as
 		# a server arg
 		connect: (server) ->
-			socket = new InProcSocket
-			oppositeSocket = new InProcSocket socket
+			socket = new InProcSocket @
+			oppositeSocket = server.clientSocket socket
 			socket.oppositeSocket = oppositeSocket
 			nextTick -> server.emit 'connection', oppositeSocket
 			nextTick -> socket.eventEmitter.emit 'connect', socket
 			socket
 
 	class InProcSocket
-		constructor: (@oppositeSocket) ->
+		constructor: (@owner, @oppositeSocket) ->
+			@id = utils.guid()
 			@eventEmitter = new EventEmitter
 
 		emit: ->
