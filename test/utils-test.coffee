@@ -59,6 +59,10 @@
 				holder._hold new A 2
 				holder.getA().should.equal 2
 
+			it 'should return content being held', ->
+				content = new A 1
+				utils.holder(content)._getContent().should.equal content
+
 		describe 'eventProxy', ->
 			it 'should return the value returned by proxied method', ->
 				proxy = utils.eventProxy new B

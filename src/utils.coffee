@@ -36,8 +36,9 @@
 	exports.holder = (obj) ->
 		proxy = exports.proxy obj, (func, name, obj) -> ->
 			proxy._content[name].apply proxy._content, arguments
-		proxy._hold = (obj) -> proxy._content = obj
+		proxy._hold = (obj) -> @_content = obj
 		proxy._hold obj
+		proxy._getContent = -> @_content
 		proxy
 
 	exports.resolvingProxy = (obj, resolver) ->

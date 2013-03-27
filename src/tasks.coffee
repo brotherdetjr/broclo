@@ -218,8 +218,7 @@
 				Task.asTask external.id, Type.asType(external.typeId), external.since
 
 	replicated =
-		repo: (socket, resolver, repo = new Repo) ->
-			repoHolder = holder repo
+		repo: (socket, resolver, repoHolder = holder new Repo) ->
 			proxy = eventProxy resolvingProxy repoHolder, resolver
 			proxy._eventEmitter.on 'afterAddType', (event) ->
 				socket.emit 'addType', externalizer.type.export event.value
@@ -240,7 +239,7 @@
 			socket.on 'addTask', (task) -> proxy.addTask externalizer.task.import task
 			socket.on 'removeTask', (id) -> proxy.removeTaskById id
 			socket.on 'pushingRepo', (repo) -> repoHolder._hold externalizer.repo.import repo
-			socket.on 'pullingRepo', -> socket.emit 'pushingRepo', externalizer.repo.export repo
+			socket.on 'pullingRepo', -> socket.emit 'pushingRepo', externalizer.repo.export repoHolder
 			proxy._holder = repoHolder
 			proxy
 
